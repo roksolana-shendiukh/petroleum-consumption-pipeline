@@ -1,0 +1,11 @@
+catalog: dbr_dev_ua5816bd
+bronze_schema: roksolana_shendiu770_bronze
+silver_schema: roksolana_shendiu770_silver
+
+consumption:
+  source_table: petroleum_raw
+  target_table: petroleum_consumption
+
+prices:
+  source_table: petroleum_prices_raw
+  target_table: petroleum_prices
