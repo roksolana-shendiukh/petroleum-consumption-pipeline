@@ -7,6 +7,14 @@ resources:
       serverless: true
       root_path: "../src/databricks_etl"
 
+      configuration:
+        wikipedia.eh_namespace: "evhua5816bd"
+        wikipedia.eh_name: "roksolana-wikipedia-recentchange"
+        wikipedia.secret_scope: "eventhub"
+        wikipedia.secret_key: "eh-connection-string"
+        wikipedia.starting_offsets: "earliest"
+        wikipedia.max_offsets_per_trigger: "50000"
+
       libraries:
         - glob:
             include: ../src/databricks_etl/transformations/**
