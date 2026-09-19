@@ -1,0 +1,38 @@
+bundle:
+  name: databricks
+  uuid: f9e87805-d6da-4945-b2ca-b714ba038707
+
+include:
+  - resources/*.yml
+
+
+variables:
+  catalog:
+    description: The catalog to use
+  bronze_schema:
+    description: The bronze schema to use
+  silver_schema:
+    description: The silver schema to use
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405604651938730.10.azuredatabricks.net
+    variables:
+      catalog: dbr_dev_ua5816bd
+      bronze_schema: roksolana_shendiu770_bronze
+      silver_schema: roksolana_shendiu770_silver
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405604651938730.10.azuredatabricks.net
+      root_path: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: dbr_prod_ua5816bd
+      bronze_schema: roksolana_shendiu770_bronze
+      silver_schema: roksolana_shendiu770_silver
+    permissions:
+      - user_name: roksolana.shendiu770@softserve.academy
+        level: CAN_MANAGE
