@@ -1,11 +1,9 @@
-# The main pipeline for databricks
-
 resources:
   pipelines:
     databricks_etl:
       name: databricks_etl
       catalog: ${var.catalog}
-      schema: ${var.schema}
+      schema: ${var.bronze_schema}
       serverless: true
       root_path: "../src/databricks_etl"
 
@@ -15,6 +13,4 @@ resources:
 
       environment:
         dependencies:
-          # We include every dependency defined by pyproject.toml by defining an editable environment
-          # that points to the folder where pyproject.toml is deployed.
           - --editable ${workspace.file_path}
