@@ -14,6 +14,9 @@ resources:
         wikipedia.secret_key: "eh-connection-string"
         wikipedia.starting_offsets: "earliest"
         wikipedia.max_offsets_per_trigger: "50000"
+        petroleum.raw_files_path: "/Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files"
+        petroleum.consumption_file: "petroleum_raw.json"
+        petroleum.prices_file: "petroleum_prices_raw.json"
 
       libraries:
         - glob:
