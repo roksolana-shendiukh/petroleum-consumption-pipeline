@@ -32,10 +32,10 @@ RAW_EVENT_SCHEMA = StructType([
 
 
 @dp.table(
-    name="wikipedia_recentchange_bronze",
-    comment="Raw Wikipedia recentchange events consumed from Event Hub via the Kafka protocol"
+    name="wikipedia_recentchange_ldp_bronze",
+    comment="Raw Wikipedia recentchange events consumed from Event Hub via the Kafka protocol (Lakeflow Declarative Pipelines version)"
 )
-def wikipedia_recentchange_bronze():
+def wikipedia_recentchange_ldp_bronze():
     raw = (
         spark.readStream
             .format("kafka")
