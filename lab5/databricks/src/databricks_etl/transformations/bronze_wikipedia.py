@@ -32,7 +32,8 @@ def _build_kafka_options():
     name="wikipedia_recentchange_ldp_bronze",
     comment="Raw Wikipedia recentchange events from Event Hub — unparsed JSON text, no schema applied",
     table_properties={
-        "pipelines.reset.allowed": "false"
+        "pipelines.reset.allowed": "false",
+        "delta.appendOnly": "true"
     }
 )
 def wikipedia_recentchange_ldp_bronze():
