@@ -29,7 +29,10 @@ def _build_kafka_options():
 
 @dp.table(
     name="wikipedia_recentchange_ldp_bronze",
-    comment="Raw Wikipedia recentchange events from Event Hub — untouched Kafka payload, no parsing"
+    comment="Raw Wikipedia recentchange events from Event Hub — untouched Kafka payload, no parsing",
+    table_properties={
+        "pipelines.reset.allowed": "false"
+    }
 )
 def wikipedia_recentchange_ldp_bronze():
     options = _build_kafka_options()
