@@ -2,19 +2,18 @@ from pyspark import pipelines as dp
 from pyspark.sql.functions import col, current_timestamp
 
 CONSUMPTION_PATH = spark.conf.get("petroleum.consumption_path")
-SCHEMA_LOCATION = spark.conf.get("petroleum.consumption_schema_location")
 
 
-@dp.table(
+@dp.materialized_view(
     name="petroleum_consumption_raw_ldp_bronze",
-    comment="Weekly petroleum consumption files, ingested incrementally via Auto Loader"
+    table_properties={
+        "pipelines.reset.allowed": "true"
+    }
 )
 def petroleum_consumption_raw_ldp_bronze():
     return (
-        spark.readStream
-            .format("cloudFiles")
-            .option("cloudFiles.format", "json")
-            .option("cloudFiles.schemaLocation", SCHEMA_LOCATION)
+        spark.read
+            .format("json")
             .load(CONSUMPTION_PATH)
             .withColumn("_source_filename", col("_metadata.file_path"))
             .withColumn("_ingested_at", current_timestamp())
