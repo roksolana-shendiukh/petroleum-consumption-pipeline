@@ -1,20 +1,30 @@
 from pyspark import pipelines as dp
 from pyspark.sql.functions import current_timestamp
 
-EH_NAMESPACE = spark.conf.get("wikipedia.eh_namespace")
-EH_NAME = spark.conf.get("wikipedia.eh_name")
-SECRET_SCOPE = spark.conf.get("wikipedia.secret_scope")
-SECRET_KEY = spark.conf.get("wikipedia.secret_key")
-STARTING_OFFSETS = spark.conf.get("wikipedia.starting_offsets")
-MAX_OFFSETS_PER_TRIGGER = spark.conf.get("wikipedia.max_offsets_per_trigger")
 
-EH_CONN_STR = dbutils.secrets.get(scope=SECRET_SCOPE, key=SECRET_KEY)
+def _build_kafka_options():
+    eh_namespace = spark.conf.get("wikipedia.eh_namespace")
+    eh_name = spark.conf.get("wikipedia.eh_name")
+    secret_scope = spark.conf.get("wikipedia.secret_scope")
+    secret_key = spark.conf.get("wikipedia.secret_key")
+    starting_offsets = spark.conf.get("wikipedia.starting_offsets")
+    max_offsets_per_trigger = spark.conf.get("wikipedia.max_offsets_per_trigger")
 
-EH_KAFKA_ENDPOINT = f"{EH_NAMESPACE}.servicebus.windows.net:9093"
-EH_SASL = (
-    f'kafkashaded.org.apache.kafka.common.security.plain.PlainLoginModule required '
-    f'username="$ConnectionString" password="{EH_CONN_STR}";'
-)
+    eh_conn_str = dbutils.secrets.get(scope=secret_scope, key=secret_key)
+
+    return {
+        "kafka.bootstrap.servers": f"{eh_namespace}.servicebus.windows.net:9093",
+        "kafka.sasl.mechanism": "PLAIN",
+        "kafka.security.protocol": "SASL_SSL",
+        "kafka.sasl.jaas.config": (
+            'kafkashaded.org.apache.kafka.common.security.plain.PlainLoginModule required '
+            f'username="$ConnectionString" password="{eh_conn_str}";'
+        ),
+        "subscribe": eh_name,
+        "startingOffsets": starting_offsets,
+        "maxOffsetsPerTrigger": max_offsets_per_trigger,
+        "failOnDataLoss": "false",
+    }
 
 
 @dp.table(
@@ -22,17 +32,11 @@ EH_SASL = (
     comment="Raw Wikipedia recentchange events from Event Hub — untouched Kafka payload, no parsing"
 )
 def wikipedia_recentchange_ldp_bronze():
+    options = _build_kafka_options()
     return (
         spark.readStream
             .format("kafka")
-            .option("kafka.bootstrap.servers", EH_KAFKA_ENDPOINT)
-            .option("kafka.sasl.mechanism", "PLAIN")
-            .option("kafka.security.protocol", "SASL_SSL")
-            .option("kafka.sasl.jaas.config", EH_SASL)
-            .option("subscribe", EH_NAME)
-            .option("startingOffsets", STARTING_OFFSETS)
-            .option("maxOffsetsPerTrigger", MAX_OFFSETS_PER_TRIGGER)
-            .option("failOnDataLoss", "false")
+            .options(**options)
             .load()
             .withColumn("_ingested_at", current_timestamp())
     )
