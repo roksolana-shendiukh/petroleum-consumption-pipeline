@@ -14,10 +14,10 @@ resources:
         wikipedia.secret_key: "eh-connection-string"
         wikipedia.starting_offsets: "earliest"
         wikipedia.max_offsets_per_trigger: "50000"
-        petroleum.consumption_path: "/Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/consumption"
-        petroleum.consumption_schema_location: "/Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/_schemas/consumption"
-        petroleum.prices_path: "/Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/prices"
-        petroleum.prices_schema_location: "/Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/_schemas/prices"
+        petroleum.consumption_path: "${var.raw_volume_path}/consumption"
+        petroleum.consumption_schema_location: "${var.raw_volume_path}/_schemas/consumption"
+        petroleum.prices_path: "${var.raw_volume_path}/prices"
+        petroleum.prices_schema_location: "${var.raw_volume_path}/_schemas/prices"
 
       libraries:
         - glob:

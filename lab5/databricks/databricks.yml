@@ -5,7 +5,6 @@ bundle:
 include:
   - resources/*.yml
 
-
 variables:
   catalog:
     description: The catalog to use
@@ -13,6 +12,8 @@ variables:
     description: The bronze schema to use
   silver_schema:
     description: The silver schema to use
+  raw_volume_path:
+    description: Base path to raw files volume
 
 targets:
   dev:
@@ -24,6 +25,7 @@ targets:
       catalog: dbr_dev_ua5816bd
       bronze_schema: roksolana_shendiu770_bronze
       silver_schema: roksolana_shendiu770_silver
+      raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files
   prod:
     mode: production
     workspace:
@@ -33,6 +35,7 @@ targets:
       catalog: dbr_prod_ua5816bd
       bronze_schema: roksolana_shendiu770_bronze
       silver_schema: roksolana_shendiu770_silver
+      raw_volume_path: /Volumes/dbr_prod_ua5816bd/roksolana_shendiu770/raw_files
     permissions:
       - user_name: roksolana.shendiu770@softserve.academy
         level: CAN_MANAGE
