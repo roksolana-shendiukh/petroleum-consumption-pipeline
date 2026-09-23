@@ -7,8 +7,9 @@ def _build_kafka_options():
     eh_name = spark.conf.get("wikipedia.eh_name")
     secret_scope = spark.conf.get("wikipedia.secret_scope")
     secret_key = spark.conf.get("wikipedia.secret_key")
-    starting_offsets = spark.conf.get("wikipedia.starting_offsets")
-    max_offsets_per_trigger = spark.conf.get("wikipedia.max_offsets_per_trigger")
+
+    starting_offsets = spark.conf.get("wikipedia.starting_offsets", "latest")
+    max_offsets_per_trigger = spark.conf.get("wikipedia.max_offsets_per_trigger", "10000")
 
     eh_conn_str = dbutils.secrets.get(scope=secret_scope, key=secret_key)
 
@@ -25,7 +26,6 @@ def _build_kafka_options():
         "maxOffsetsPerTrigger": max_offsets_per_trigger,
         "failOnDataLoss": "false",
     }
-
 
 @dp.table(
     name="wikipedia_recentchange_ldp_bronze",
