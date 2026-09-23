@@ -25,6 +25,7 @@ def _build_eh_sasl_config(secret_scope, secret_key):
         f'username="$ConnectionString" password="{eh_conn_str}";'
     )
 
+
 def _build_kafka_options():
     conn = _get_eh_connection_config()
     stream = _get_eh_stream_config()
@@ -43,6 +44,7 @@ def _build_kafka_options():
 
 @dp.table(
     name="wikipedia_recentchange_ldp_bronze",
+    comment="Raw Wikipedia recentchange events from Event Hub (Kafka-compatible endpoint)",
     table_properties={
         "pipelines.reset.allowed": "false",
         "delta.appendOnly": "true"
@@ -55,7 +57,14 @@ def wikipedia_recentchange_ldp_bronze():
             .format("kafka")
             .options(**options)
             .load()
-            .withColumn("value", col("value").cast("string"))
-            .withColumn("key", col("key").cast("string"))
+            .select(
+                col("key").cast("string").alias("key"),
+                col("value").cast("string").alias("value"),
+                col("topic").cast("string").alias("topic"),
+                col("partition").cast("int").alias("partition"),
+                col("offset").cast("long").alias("offset"),
+                col("timestamp").cast("timestamp").alias("timestamp"),
+                col("timestampType").cast("int").alias("timestamp_type"),
+            )
             .withColumn("_ingested_at", current_timestamp())
     )
