@@ -14,6 +14,7 @@ def petroleum_consumption_raw_ldp_bronze():
     return (
         spark.read
             .format("json")
+            .option("multiLine", "true")
             .load(CONSUMPTION_PATH)
             .withColumn("_source_filename", col("_metadata.file_path"))
             .withColumn("_ingested_at", current_timestamp())
