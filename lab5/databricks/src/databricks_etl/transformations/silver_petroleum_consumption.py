@@ -1,18 +1,25 @@
 from pyspark import pipelines as dp
-from pyspark.sql.functions import expr, lit, col, struct
+from pyspark.sql.functions import expr, lit, col, struct, when
 
-dp.create_streaming_table("petroleum_consumption_ldp_silver")
+dp.create_streaming_table(
+    "petroleum_consumption_ldp_silver",
+    comment="Cleaned petroleum consumption facts (SCD Type 1)",
+    table_properties={
+        "pipelines.reset.allowed": "false"
+    }
+)
 dp.create_streaming_table(
     "petroleum_consumption_quarantine",
+    comment="Consumption records rejected by quality expectations",
     table_properties={"pipelines.reset.allowed": "false"}
 )
+
+WITHHELD_CODES = ("W", "(s)", "NA", "--", "NM")
 
 CONSUMPTION_RULES = {
     "valid_period": "period_bk IS NOT NULL",
     "valid_series": "series_bk IS NOT NULL AND duoarea_bk IS NOT NULL",
-    "valid_consumption_value": (
-        "consumption_value IS NULL OR consumption_value >= 0"
-    ),
+    "valid_consumption_value": "value_status != 'unparseable'",
 }
 
 
@@ -28,6 +35,13 @@ def petroleum_consumption_raw_typed():
             .withColumnRenamed("product", "product_bk")
             .withColumn("period_bk", expr("try_cast(period as date)"))
             .withColumn("consumption_value", expr("try_cast(value as decimal(10,3))"))
+            .withColumn(
+                "value_status",
+                when(col("consumption_value").isNotNull(), "ok")
+                .when(col("value").isin(*WITHHELD_CODES), "withheld")
+                .when(col("value").isNull(), "missing")
+                .otherwise("unparseable")
+            )
             .withColumn("_sequence_key", struct(col("period_bk"), col("_ingested_at")))
     )
 
@@ -40,7 +54,8 @@ def petroleum_consumption_raw_typed():
 def petroleum_consumption_cleaned():
     return spark.readStream.table("petroleum_consumption_raw_typed").select(
         "series_bk", "duoarea_bk", "period_bk", "product_bk",
-        "units", "consumption_value", "value", "_ingested_at", "_sequence_key"
+        "units", "consumption_value", "value_status", "value",
+        "_ingested_at", "_sequence_key"
     )
 
 

@@ -1,5 +1,5 @@
 from pyspark import pipelines as dp
-from pyspark.sql.functions import expr, struct, lit, col
+from pyspark.sql.functions import expr, struct, lit, col, when
 
 dp.create_streaming_table(
     "petroleum_prices_ldp_silver",
@@ -11,15 +11,15 @@ dp.create_streaming_table(
 dp.create_streaming_table(
     "petroleum_prices_quarantine",
     comment="Price records rejected by quality expectations",
-    table_properties={
-        "pipelines.reset.allowed": "false"
-    }
+    table_properties={"pipelines.reset.allowed": "false"}
 )
+
+WITHHELD_CODES = ("W", "(s)", "NA", "--", "NM")
 
 PRICES_RULES = {
     "valid_effective_from": "effective_from IS NOT NULL",
     "valid_series": "series_bk IS NOT NULL",
-    "valid_price": "price IS NULL OR price > 0",
+    "valid_price": "price_status != 'unparseable'",
 }
 
 
@@ -34,8 +34,15 @@ def petroleum_prices_raw_typed():
             .withColumnRenamed("product-name", "product_name")
             .withColumn("effective_from", expr("try_cast(period as date)"))
             .withColumn("price", expr("try_cast(value as decimal(10,3))"))
+            .withColumn(
+                "price_status",
+                when(col("price").isNotNull(), "ok")
+                .when(col("value").isin(*WITHHELD_CODES), "withheld")
+                .when(col("value").isNull(), "missing")
+                .otherwise("unparseable")
+            )
             .select(
-                "series_bk", "product_name", "units", "price",
+                "series_bk", "product_name", "units", "price", "price_status",
                 "effective_from", "value", "_ingested_at"
             )
             .withColumn("_sequence_key", struct(col("effective_from"), col("_ingested_at")))
@@ -49,7 +56,7 @@ def petroleum_prices_raw_typed():
 @dp.expect_all_or_drop(PRICES_RULES)
 def petroleum_prices_cleaned():
     return spark.readStream.table("petroleum_prices_raw_typed").select(
-        "series_bk", "product_name", "units", "price",
+        "series_bk", "product_name", "units", "price", "price_status",
         "effective_from", "_ingested_at", "_sequence_key"
     )
 
