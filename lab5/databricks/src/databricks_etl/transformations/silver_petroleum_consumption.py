@@ -7,7 +7,11 @@ dp.create_streaming_table("petroleum_consumption_ldp_silver")
 @dp.view(name="petroleum_consumption_cleaned")
 @dp.expect_or_drop("valid_period", "period_bk IS NOT NULL")
 @dp.expect_or_drop("valid_series", "series_bk IS NOT NULL AND duoarea_bk IS NOT NULL")
-@dp.expect_or_fail("valid_consumption_value", "consumption_value IS NULL OR consumption_value >= 0")
+@dp.expect_or_fail(
+    "valid_consumption_value",
+    "value IS NULL OR "
+    "(try_cast(value AS decimal(10,3)) IS NOT NULL AND try_cast(value AS decimal(10,3)) >= 0)"
+)
 def petroleum_consumption_cleaned():
     bronze = spark.readStream.table("petroleum_consumption_raw_ldp_bronze")
 
