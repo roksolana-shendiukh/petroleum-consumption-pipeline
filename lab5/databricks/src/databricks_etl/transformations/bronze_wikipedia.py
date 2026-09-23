@@ -1,6 +1,5 @@
 from pyspark import pipelines as dp
-from pyspark.sql.functions import col, from_json, current_timestamp
-from pyspark.sql.types import StructType, StructField, StringType, BooleanType
+from pyspark.sql.functions import current_timestamp
 
 EH_NAMESPACE = spark.conf.get("wikipedia.eh_namespace")
 EH_NAME = spark.conf.get("wikipedia.eh_name")
@@ -17,26 +16,13 @@ EH_SASL = (
     f'username="$ConnectionString" password="{EH_CONN_STR}";'
 )
 
-RAW_EVENT_SCHEMA = StructType([
-    StructField("id", StringType()),
-    StructField("type", StringType()),
-    StructField("title", StringType()),
-    StructField("user", StringType()),
-    StructField("bot", BooleanType()),
-    StructField("minor", BooleanType()),
-    StructField("timestamp", StringType()),
-    StructField("wiki", StringType()),
-    StructField("server_name", StringType()),
-    StructField("length", StringType()),
-])
-
 
 @dp.table(
     name="wikipedia_recentchange_ldp_bronze",
-    comment="Raw Wikipedia recentchange events consumed from Event Hub via the Kafka protocol (Lakeflow Declarative Pipelines version)"
+    comment="Raw Wikipedia recentchange events from Event Hub — untouched Kafka payload, no parsing"
 )
 def wikipedia_recentchange_ldp_bronze():
-    raw = (
+    return (
         spark.readStream
             .format("kafka")
             .option("kafka.bootstrap.servers", EH_KAFKA_ENDPOINT)
@@ -48,14 +34,5 @@ def wikipedia_recentchange_ldp_bronze():
             .option("maxOffsetsPerTrigger", MAX_OFFSETS_PER_TRIGGER)
             .option("failOnDataLoss", "false")
             .load()
-    )
-
-    parsed = raw.select(
-        from_json(col("value").cast("string"), RAW_EVENT_SCHEMA).alias("data"),
-        col("timestamp").alias("kafka_timestamp")
-    )
-
-    return (
-        parsed.select("data.*", "kafka_timestamp")
             .withColumn("_ingested_at", current_timestamp())
     )
