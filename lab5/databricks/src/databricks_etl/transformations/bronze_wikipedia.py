@@ -1,5 +1,5 @@
 from pyspark import pipelines as dp
-from pyspark.sql.functions import current_timestamp
+from pyspark.sql.functions import current_timestamp, col
 
 
 def _build_kafka_options():
@@ -27,9 +27,10 @@ def _build_kafka_options():
         "failOnDataLoss": "false",
     }
 
+
 @dp.table(
     name="wikipedia_recentchange_ldp_bronze",
-    comment="Raw Wikipedia recentchange events from Event Hub — untouched Kafka payload, no parsing",
+    comment="Raw Wikipedia recentchange events from Event Hub — unparsed JSON text, no schema applied",
     table_properties={
         "pipelines.reset.allowed": "false"
     }
@@ -41,5 +42,7 @@ def wikipedia_recentchange_ldp_bronze():
             .format("kafka")
             .options(**options)
             .load()
+            .withColumn("value", col("value").cast("string"))
+            .withColumn("key", col("key").cast("string"))
             .withColumn("_ingested_at", current_timestamp())
     )
