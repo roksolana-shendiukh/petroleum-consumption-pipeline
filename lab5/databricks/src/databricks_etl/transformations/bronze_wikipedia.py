@@ -13,7 +13,7 @@ def _get_eh_connection_config():
 
 def _get_eh_stream_config():
     return {
-        "starting_offsets": spark.conf.get("wikipedia.starting_offsets", "latest"),
+        "starting_offsets": spark.conf.get("wikipedia.starting_offsets", "earliest"),
         "max_offsets_per_trigger": spark.conf.get("wikipedia.max_offsets_per_trigger", "10000"),
     }
 

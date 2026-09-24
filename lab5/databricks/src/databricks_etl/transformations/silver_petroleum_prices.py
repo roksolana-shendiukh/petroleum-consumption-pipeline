@@ -19,7 +19,7 @@ WITHHELD_CODES = ("W", "(s)", "NA", "--", "NM")
 PRICES_RULES = {
     "valid_effective_from": "effective_from IS NOT NULL",
     "valid_series": "series_bk IS NOT NULL",
-    "valid_price": "price_status != 'unparseable'",
+    "valid_price": "price_status = 'ok'",
 }
 
 

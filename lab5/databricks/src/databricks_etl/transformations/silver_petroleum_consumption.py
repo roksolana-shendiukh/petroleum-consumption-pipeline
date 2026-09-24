@@ -1,5 +1,5 @@
 from pyspark import pipelines as dp
-from pyspark.sql.functions import expr, lit, col, struct, when
+from pyspark.sql.functions import expr, lit, col, when
 
 dp.create_streaming_table(
     "petroleum_consumption_ldp_silver",
@@ -42,7 +42,6 @@ def petroleum_consumption_raw_typed():
                 .when(col("value").isNull(), "missing")
                 .otherwise("unparseable")
             )
-            .withColumn("_sequence_key", struct(col("period_bk"), col("_ingested_at")))
     )
 
 
@@ -55,7 +54,7 @@ def petroleum_consumption_cleaned():
     return spark.readStream.table("petroleum_consumption_raw_typed").select(
         "series_bk", "duoarea_bk", "period_bk", "product_bk",
         "units", "consumption_value", "value_status", "value",
-        "_ingested_at", "_sequence_key"
+        "_ingested_at"
     )
 
 
@@ -74,7 +73,7 @@ dp.create_auto_cdc_flow(
     target="petroleum_consumption_ldp_silver",
     source="petroleum_consumption_cleaned",
     keys=["series_bk", "duoarea_bk", "period_bk"],
-    sequence_by=col("_sequence_key"),
+    sequence_by=col("_ingested_at"),
     stored_as_scd_type=1,
-    except_column_list=["value", "_sequence_key"]
+    except_column_list=["value"]
 )
