@@ -18,6 +18,7 @@ try:
     config = full_config[environment]
 
     catalog = config["catalog"]
+    bronze_schema = config["bronze_schema"]
     silver_schema = config["silver_schema"]
     gold_schema = config["gold_schema"]
 
@@ -33,46 +34,65 @@ except Exception as e:
 # COMMAND ----------
 
 import logging
-from pyspark.sql.functions import col, date_trunc, month, quarter, year, date_format
+from pyspark.sql.functions import col
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_dimensions_pipeline")
 logger.setLevel(logging.INFO)
 
 try:
-    consumption_dates = spark.table(consumption_silver).select(col("period_bk").alias("full_date"))
-    prices_dates = spark.table(prices_silver).select(col("effective_from").alias("full_date"))
-
-    all_dates = consumption_dates.union(prices_dates).distinct().filter(col("full_date").isNotNull())
-
-    dim_date_df = (all_dates
-        .withColumn("week_start_date", date_trunc("week", col("full_date")).cast("date"))
-        .withColumn("month", month(col("full_date")))
-        .withColumn("month_name", date_format(col("full_date"), "MMMM"))
-        .withColumn("quarter", quarter(col("full_date")))
-        .withColumn("year", year(col("full_date")))
+    mapping_df = (
+        spark.table(f"{catalog}.{bronze_schema}.product_price_mapping")
+        .select(
+            col("consumption_product_code"),
+            col("consumption_product_name").alias("product_name"),
+            col("price_product_code")
+        )
     )
 
-    target_table_obj = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.dim_date")
+    consumption_units = (
+        spark.table(consumption_silver)
+        .select(
+            col("product_bk").alias("consumption_product_code"),
+            col("units").alias("unit_code")
+        )
+        .distinct()
+    )
+
+    dim_product_df = (
+        mapping_df
+        .join(consumption_units, on="consumption_product_code", how="left")
+        .select(
+            "consumption_product_code",
+            "price_product_code",
+            "product_name",
+            "unit_code"
+        )
+    )
+
+    target_table_obj = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.dim_product")
 
     merge_result = (target_table_obj.alias("t")
-        .merge(dim_date_df.alias("s"), "t.full_date = s.full_date")
+        .merge(dim_product_df.alias("s"), "t.consumption_product_code = s.consumption_product_code")
+        .whenMatchedUpdate(set={
+            "price_product_code": "s.price_product_code",
+            "product_name": "s.product_name",
+            "unit_code": "s.unit_code"
+        })
         .whenNotMatchedInsert(values={
-            "full_date": "s.full_date",
-            "week_start_date": "s.week_start_date",
-            "month": "s.month",
-            "month_name": "s.month_name",
-            "quarter": "s.quarter",
-            "year": "s.year"
+            "consumption_product_code": "s.consumption_product_code",
+            "price_product_code": "s.price_product_code",
+            "product_name": "s.product_name",
+            "unit_code": "s.unit_code"
         })
         .execute()
     )
 
     stats = merge_result.collect()[0].asDict()
-    logger.info(f"dim_date MERGE completed: {stats}")
+    logger.info(f"dim_product MERGE completed: {stats}")
 
 except Exception as e:
-    logger.error(f"dim_date load failed: {e}")
+    logger.error(f"dim_product load failed: {e}")
     raise
 
 # COMMAND ----------
@@ -166,10 +186,12 @@ logger.setLevel(logging.INFO)
 
 try:
     dim_area_df = (spark.table(consumption_silver)
-        .select(col("duoarea_bk").alias("area_code"))
+        .select(
+            col("duoarea_bk").alias("area_code"),
+            col("area_name")
+        )
         .distinct()
         .filter(col("area_code").isNotNull())
-        .withColumn("area_name", lit("Unknown"))
     )
 
     target_table_obj = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.dim_area")
