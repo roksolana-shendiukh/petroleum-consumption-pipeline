@@ -108,6 +108,7 @@ try:
 
     combined_products = consumption_products.unionByName(prices_products)
 
+
     dim_product_df = (combined_products
         .groupBy("product_code")
         .agg(
@@ -119,7 +120,8 @@ try:
         )
         .withColumn(
             "product_name",
-            when(col("prices_name").isNotNull(), col("prices_name")).otherwise(col("fallback_name"))
+            when(col("prices_name").isNotNull(), col("prices_name"))
+            .otherwise(col("product_code")) 
         )
         .withColumn(
             "source_system",
