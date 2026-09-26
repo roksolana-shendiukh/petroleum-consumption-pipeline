@@ -2,6 +2,7 @@ dev:
   catalog: dbr_dev_ua5816bd
   bronze_schema: roksolana_shendiu770_bronze
   silver_schema: roksolana_shendiu770_silver
+  gold_schema: roksolana_shendiu770_gold
   bronze_volumes_path: "/Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/"
   consumption:
     source_file: petroleum_raw.json
@@ -16,6 +17,7 @@ prod:
   catalog: dbr_prod_ua5816bd
   bronze_schema: roksolana_shendiu770_bronze
   silver_schema: roksolana_shendiu770_silver
+  gold_schema: roksolana_shendiu770_gold
   bronze_volumes_path: "/Volumes/dbr_prod_ua5816bd/roksolana_shendiu770/raw_files/"
   consumption:
     source_file: petroleum_raw.json
