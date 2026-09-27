@@ -60,20 +60,17 @@ try:
             spark_max("consumption_value").alias("max_weekly_consumption"),
             count("consumption_value").alias("weeks_count")
         )
-    )
-
-    month_start_lookup = spark.table(f"{catalog}.{gold_schema}.dim_date").select(
-        col("full_date"), col("date_key")
+        .filter(col("weeks_count") >= 4)
     )
 
     monthly_df = (monthly_agg
         .join(
-            month_start_lookup,
-            monthly_agg.month_start_date == month_start_lookup.full_date,
+            dim_date_df.select(col("dim_date_key"), col("full_date")),
+            monthly_agg.month_start_date == dim_date_df.full_date,
             "inner"
         )
         .select(
-            col("date_key").alias("dim_date_key"),
+            col("dim_date_key"),
             "dim_product_key", "dim_area_key",
             "total_consumption", "avg_weekly_consumption",
             "min_weekly_consumption", "max_weekly_consumption", "weeks_count"
@@ -139,21 +136,18 @@ try:
             spark_max("price").alias("max_price"),
             count("price").alias("weeks_count")
         )
+        .filter(col("weeks_count") >= 4)
         .withColumn("price_volatility", col("max_price") - col("min_price"))
-    )
-
-    month_start_lookup = spark.table(f"{catalog}.{gold_schema}.dim_date").select(
-        col("full_date"), col("date_key")
     )
 
     monthly_df = (monthly_agg
         .join(
-            month_start_lookup,
-            monthly_agg.month_start_date == month_start_lookup.full_date,
+            dim_date_df.select(col("dim_date_key"), col("full_date")),
+            monthly_agg.month_start_date == dim_date_df.full_date,
             "inner"
         )
         .select(
-            col("date_key").alias("dim_date_key"),
+            col("dim_date_key"),
             "dim_product_key",
             "avg_price", "min_price", "max_price", "price_volatility", "weeks_count"
         )
