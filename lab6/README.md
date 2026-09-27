@@ -2,7 +2,7 @@
 
 ## Architecture
 
-<img src="../../screenshots/gold_layer.png" alt="Gold layer schema" width="800">
+<img src="../screenshots/gold_layer.png" alt="Gold layer schema" width="800">
 
 
 ## Design Highlights
