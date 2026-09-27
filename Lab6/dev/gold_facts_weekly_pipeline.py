@@ -41,7 +41,6 @@ from pyspark.sql.functions import col, broadcast
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_facts_weekly_pipeline")
-logger.setLevel(logging.INFO)
 
 try:
     consumption_df = spark.table(consumption_silver)
@@ -50,30 +49,17 @@ try:
     dim_area_df = spark.table(dim_area_tbl).select("area_key", "area_code")
 
     joined_df = (consumption_df
-        .join(broadcast(dim_date_df), consumption_df.period_bk == dim_date_df.full_date, "left")
-        .join(broadcast(dim_product_df), consumption_df.product_bk == dim_product_df.consumption_product_code, "left")
-        .join(broadcast(dim_area_df), consumption_df.duoarea_bk == dim_area_df.area_code, "left")
+        .join(broadcast(dim_date_df), consumption_df.period_bk == dim_date_df.full_date, "inner")
+        .join(broadcast(dim_product_df), consumption_df.product_bk == dim_product_df.consumption_product_code, "inner")
+        .join(broadcast(dim_area_df), consumption_df.duoarea_bk == dim_area_df.area_code, "inner")
     )
 
-    orphans_df = (joined_df
-        .filter(col("date_key").isNull() | col("product_key").isNull() | col("area_key").isNull())
-        .select("series_bk", "period_bk", "product_bk", "duoarea_bk")
-    )
-
-    if not orphans_df.isEmpty():
-        logger.warning("Some consumption rows could not be resolved against dimensions.")
-
-    fact_df = (joined_df
-        .filter(
-            col("date_key").isNotNull() & col("product_key").isNotNull() & col("area_key").isNotNull()
-        )
-        .select(
-            col("date_key").alias("dim_date_key"),
-            col("product_key").alias("dim_product_key"),
-            col("area_key").alias("dim_area_key"),
-            col("series_bk"),
-            col("consumption_value")
-        )
+    fact_df = joined_df.select(
+        col("date_key").alias("dim_date_key"),
+        col("product_key").alias("dim_product_key"),
+        col("area_key").alias("dim_area_key"),
+        col("series_bk"),
+        col("consumption_value")
     )
 
     target_table_obj = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.fct_snapshot_consumption_weekly")
@@ -87,7 +73,13 @@ try:
             "series_bk": "s.series_bk",
             "consumption_value": "s.consumption_value"
         })
-        .whenNotMatchedInsertAll()
+        .whenNotMatchedInsert(values={
+            "dim_date_key": "s.dim_date_key",
+            "dim_product_key": "s.dim_product_key",
+            "dim_area_key": "s.dim_area_key",
+            "series_bk": "s.series_bk",
+            "consumption_value": "s.consumption_value"
+        })
         .execute()
     )
 
@@ -105,7 +97,6 @@ from pyspark.sql.functions import col, broadcast
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_facts_weekly_pipeline")
-logger.setLevel(logging.INFO)
 
 try:
     prices_df = spark.table(prices_silver)
@@ -113,28 +104,15 @@ try:
     dim_product_df = spark.table(dim_product_tbl).select("product_key", "price_product_code")
 
     joined_df = (prices_df
-        .join(broadcast(dim_date_df), prices_df.effective_from == dim_date_df.full_date, "left")
-        .join(broadcast(dim_product_df), prices_df.product_bk == dim_product_df.price_product_code, "left")
+        .join(broadcast(dim_date_df), prices_df.effective_from == dim_date_df.full_date, "inner")
+        .join(broadcast(dim_product_df), prices_df.product_bk == dim_product_df.price_product_code, "inner")
     )
 
-    orphans_df = (joined_df
-        .filter(col("date_key").isNull() | col("product_key").isNull())
-        .select("series_bk", "effective_from", "product_bk")
-    )
-
-    orphans_df.cache()
-    if not orphans_df.isEmpty():
-        logger.warning("Some prices rows could not be resolved against dimensions")
-    orphans_df.unpersist()
-
-    fact_df = (joined_df
-        .filter(col("date_key").isNotNull() & col("product_key").isNotNull())
-        .select(
-            col("date_key").alias("dim_date_key"),
-            col("product_key").alias("dim_product_key"),
-            col("series_bk"),
-            col("price")
-        )
+    fact_df = joined_df.select(
+        col("date_key").alias("dim_date_key"),
+        col("product_key").alias("dim_product_key"),
+        col("series_bk"),
+        col("price")
     )
 
     target_table_obj = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.fct_snapshot_prices_weekly")
@@ -148,7 +126,12 @@ try:
             "series_bk": "s.series_bk",
             "price": "s.price"
         })
-        .whenNotMatchedInsertAll()
+        .whenNotMatchedInsert(values={
+            "dim_date_key": "s.dim_date_key",
+            "dim_product_key": "s.dim_product_key",
+            "series_bk": "s.series_bk",
+            "price": "s.price"
+        })
         .execute()
     )
 
