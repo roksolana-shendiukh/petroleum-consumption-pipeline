@@ -8,7 +8,7 @@ dbutils.widgets.text("config_path", "")
 environment = dbutils.widgets.get("environment")
 CONFIG_PATH = dbutils.widgets.get("config_path")
 
-logger = logging.getLogger("gold_facts_weekly_pipeline")
+logger = logging.getLogger("gold_facts_monthly_pipeline")
 logger.setLevel(logging.INFO)
 
 try:
@@ -41,7 +41,6 @@ from pyspark.sql.functions import col, min as spark_min, sum as spark_sum, avg, 
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_facts_monthly_pipeline")
-logger.setLevel(logging.INFO)
 
 try:
     weekly_df = spark.table(f"{catalog}.{gold_schema}.fct_snapshot_consumption_weekly")
@@ -71,7 +70,7 @@ try:
         .join(
             month_start_lookup,
             monthly_agg.month_start_date == month_start_lookup.full_date,
-            "left"
+            "inner"
         )
         .select(
             col("date_key").alias("dim_date_key"),
@@ -88,8 +87,23 @@ try:
             monthly_df.alias("s"),
             "t.dim_date_key = s.dim_date_key AND t.dim_product_key = s.dim_product_key AND t.dim_area_key = s.dim_area_key"
         )
-        .whenMatchedUpdateAll()
-        .whenNotMatchedInsertAll()
+        .whenMatchedUpdate(set={
+            "total_consumption": "s.total_consumption",
+            "avg_weekly_consumption": "s.avg_weekly_consumption",
+            "min_weekly_consumption": "s.min_weekly_consumption",
+            "max_weekly_consumption": "s.max_weekly_consumption",
+            "weeks_count": "s.weeks_count"
+        })
+        .whenNotMatchedInsert(values={
+            "dim_date_key": "s.dim_date_key",
+            "dim_product_key": "s.dim_product_key",
+            "dim_area_key": "s.dim_area_key",
+            "total_consumption": "s.total_consumption",
+            "avg_weekly_consumption": "s.avg_weekly_consumption",
+            "min_weekly_consumption": "s.min_weekly_consumption",
+            "max_weekly_consumption": "s.max_weekly_consumption",
+            "weeks_count": "s.weeks_count"
+        })
         .execute()
     )
 
@@ -107,7 +121,6 @@ from pyspark.sql.functions import col, min as spark_min, avg, max as spark_max, 
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_facts_monthly_pipeline")
-logger.setLevel(logging.INFO)
 
 try:
     weekly_df = spark.table(f"{catalog}.{gold_schema}.fct_snapshot_prices_weekly")
@@ -137,7 +150,7 @@ try:
         .join(
             month_start_lookup,
             monthly_agg.month_start_date == month_start_lookup.full_date,
-            "left"
+            "inner"
         )
         .select(
             col("date_key").alias("dim_date_key"),
@@ -153,8 +166,22 @@ try:
             monthly_df.alias("s"),
             "t.dim_date_key = s.dim_date_key AND t.dim_product_key = s.dim_product_key"
         )
-        .whenMatchedUpdateAll()
-        .whenNotMatchedInsertAll()
+        .whenMatchedUpdate(set={
+            "avg_price": "s.avg_price",
+            "min_price": "s.min_price",
+            "max_price": "s.max_price",
+            "price_volatility": "s.price_volatility",
+            "weeks_count": "s.weeks_count"
+        })
+        .whenNotMatchedInsert(values={
+            "dim_date_key": "s.dim_date_key",
+            "dim_product_key": "s.dim_product_key",
+            "avg_price": "s.avg_price",
+            "min_price": "s.min_price",
+            "max_price": "s.max_price",
+            "price_volatility": "s.price_volatility",
+            "weeks_count": "s.weeks_count"
+        })
         .execute()
     )
 
