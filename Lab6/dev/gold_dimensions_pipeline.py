@@ -98,72 +98,56 @@ except Exception as e:
 # COMMAND ----------
 
 import logging
-from pyspark.sql.functions import col, split, lit, when, countDistinct, first
+from pyspark.sql.functions import col
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_dimensions_pipeline")
 logger.setLevel(logging.INFO)
 
 try:
-    consumption_products = (spark.table(consumption_silver)
+    mapping_df = (
+        spark.table(f"{catalog}.{bronze_schema}.product_price_mapping")
         .select(
-            col("product_bk").alias("product_code"),
-            lit("Unknown").cast("string").alias("product_name"),
+            col("consumption_product_code"),
+            col("consumption_product_name").alias("product_name"),
+            col("price_product_code")
+        )
+    )
+
+    consumption_units = (
+        spark.table(consumption_silver)
+        .select(
+            col("product_bk").alias("consumption_product_code"),
             col("units").alias("unit_code")
         )
         .distinct()
-        .withColumn("source_system", lit("consumption"))
     )
 
-    prices_products = (spark.table(prices_silver)
-        .withColumn("product_code", split(col("series_bk"), "_").getItem(1))
+    dim_product_df = (
+        mapping_df
+        .join(consumption_units, on="consumption_product_code", how="left")
         .select(
-            "product_code",
-            col("product_name"),
-            col("units").alias("unit_code")
-        )
-        .distinct()
-        .withColumn("source_system", lit("prices"))
-    )
-
-    combined_products = consumption_products.unionByName(prices_products)
-
-
-    dim_product_df = (combined_products
-        .groupBy("product_code")
-        .agg(
-            first(when(col("source_system") == "prices", col("product_name")), ignorenulls=True).alias("prices_name"),
-            first("product_name", ignorenulls=True).alias("fallback_name"),
-            first("unit_code", ignorenulls=True).alias("unit_code"),
-            countDistinct("source_system").alias("source_count"),
-            first("source_system", ignorenulls=True).alias("single_source")
-        )
-        .withColumn(
+            "consumption_product_code",
+            "price_product_code",
             "product_name",
-            when(col("prices_name").isNotNull(), col("prices_name"))
-            .otherwise(col("product_code")) 
+            "unit_code"
         )
-        .withColumn(
-            "source_system",
-            when(col("source_count") > 1, lit("both")).otherwise(col("single_source"))
-        )
-        .select("product_code", "product_name", "unit_code", "source_system")
     )
 
     target_table_obj = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.dim_product")
 
     merge_result = (target_table_obj.alias("t")
-        .merge(dim_product_df.alias("s"), "t.product_code = s.product_code")
+        .merge(dim_product_df.alias("s"), "t.consumption_product_code = s.consumption_product_code")
         .whenMatchedUpdate(set={
+            "price_product_code": "s.price_product_code",
             "product_name": "s.product_name",
-            "unit_code": "s.unit_code",
-            "source_system": "s.source_system"
+            "unit_code": "s.unit_code"
         })
         .whenNotMatchedInsert(values={
-            "product_code": "s.product_code",
+            "consumption_product_code": "s.consumption_product_code",
+            "price_product_code": "s.price_product_code",
             "product_name": "s.product_name",
-            "unit_code": "s.unit_code",
-            "source_system": "s.source_system"
+            "unit_code": "s.unit_code"
         })
         .execute()
     )

@@ -46,12 +46,12 @@ logger.setLevel(logging.INFO)
 try:
     consumption_df = spark.table(consumption_silver)
     dim_date_df = spark.table(dim_date_tbl).select("date_key", "full_date")
-    dim_product_df = spark.table(dim_product_tbl).select("product_key", "product_code")
+    dim_product_df = spark.table(dim_product_tbl).select("product_key", "consumption_product_code")
     dim_area_df = spark.table(dim_area_tbl).select("area_key", "area_code")
 
     joined_df = (consumption_df
         .join(broadcast(dim_date_df), consumption_df.period_bk == dim_date_df.full_date, "left")
-        .join(broadcast(dim_product_df), consumption_df.product_bk == dim_product_df.product_code, "left")
+        .join(broadcast(dim_product_df), consumption_df.product_bk == dim_product_df.consumption_product_code, "left")
         .join(broadcast(dim_area_df), consumption_df.duoarea_bk == dim_area_df.area_code, "left")
     )
 
@@ -60,11 +60,8 @@ try:
         .select("series_bk", "period_bk", "product_bk", "duoarea_bk")
     )
 
-    orphans_df.cache()
     if not orphans_df.isEmpty():
-        logger.warning("Some consumption rows could not be resolved against dimensions. Sample below.")
-        orphans_df.show(20, truncate=False)
-    orphans_df.unpersist()
+        logger.warning("Some consumption rows could not be resolved against dimensions.")
 
     fact_df = (joined_df
         .filter(
@@ -104,33 +101,30 @@ except Exception as e:
 # COMMAND ----------
 
 import logging
-from pyspark.sql.functions import col, split, broadcast
+from pyspark.sql.functions import col, broadcast
 from delta.tables import DeltaTable
 
 logger = logging.getLogger("gold_facts_weekly_pipeline")
 logger.setLevel(logging.INFO)
 
 try:
-    prices_df = spark.table(prices_silver).withColumn(
-        "parsed_product_code", split(col("series_bk"), "_").getItem(1)
-    )
+    prices_df = spark.table(prices_silver)
     dim_date_df = spark.table(dim_date_tbl).select("date_key", "full_date")
-    dim_product_df = spark.table(dim_product_tbl).select("product_key", "product_code")
+    dim_product_df = spark.table(dim_product_tbl).select("product_key", "price_product_code")
 
     joined_df = (prices_df
         .join(broadcast(dim_date_df), prices_df.effective_from == dim_date_df.full_date, "left")
-        .join(broadcast(dim_product_df), prices_df.parsed_product_code == dim_product_df.product_code, "left")
+        .join(broadcast(dim_product_df), prices_df.product_bk == dim_product_df.price_product_code, "left")
     )
 
     orphans_df = (joined_df
         .filter(col("date_key").isNull() | col("product_key").isNull())
-        .select("series_bk", "effective_from", "parsed_product_code")
+        .select("series_bk", "effective_from", "product_bk")
     )
 
     orphans_df.cache()
     if not orphans_df.isEmpty():
-        logger.warning("Some prices rows could not be resolved against dimensions. Sample below.")
-        orphans_df.show(20, truncate=False)
+        logger.warning("Some prices rows could not be resolved against dimensions")
     orphans_df.unpersist()
 
     fact_df = (joined_df
