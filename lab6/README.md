@@ -19,6 +19,12 @@
 - **`INNER JOIN` is used when resolving facts against dimensions**, which silently drops any row that fails to resolve. I'm aware this is an ANTI-PATTERN for production: orphaned/unresolved rows should be routed to a DLQ table for investigation rather than dropped, so nothing is lost silently. That DLQ layer isn't implemented here.
 - **`product_price_mapping` is stored as a Delta table in Unity Catalog** for the reasons above, but I don't have confidence this matches how mapping/crosswalk tables are actually managed in production data platforms – this is one of the things I'd like to validate with someone more experienced.
 
+## Alert
+
+<img src="../screenshots/alert_email.png" alt="Databricks SQL alert email notification" width="800">
+
+**Known limitation.** The alert compares a string (status != 'ok') instead of a number, which is fragile in production. A numeric check on pct_change or days_since_last_data would be more robust.
+
 ## Open Questions
 
 - **Production Code Mapping.** How is product code mapping between heterogeneous data sources typically handled in production pipelines?
