@@ -1,5 +1,5 @@
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, concat_ws, expr, lit, row_number, sha2
+from pyspark.sql.functions import col, concat_ws, expr, lead, lit, row_number, sha2
 from pyspark.sql.window import Window
 
 
@@ -51,4 +51,60 @@ def build_silver_consumption(bronze_df: DataFrame) -> DataFrame:
             "units", "consumption_value", "_source_system", "_ingested_at", "_updated_at",
         )
     )
+
+def clean_prices(bronze_df: DataFrame) -> DataFrame:
+    """Rename raw EIA price columns, safely cast, keep only positive prices."""
+    return (
+        bronze_df
+        .withColumnRenamed("series", "series_bk")
+        .withColumnRenamed("product", "product_bk")
+        .withColumnRenamed("product-name", "product_name")
+        .withColumn("effective_from", expr("try_cast(period as date)"))
+        .withColumn("price", expr("try_cast(value as decimal(10,3))"))
+        .select(
+            "series_bk", "product_bk", "product_name", "units", "price", "effective_from",
+            "source_filename", "ingestion_timestamp",
+        )
+        .filter(col("price").isNotNull() & (col("price") > 0))
+    )
+
+
+def add_validity_window(df: DataFrame) -> DataFrame:
+    """SCD2-style validity: effective_to = next effective_from within the series."""
+    w = Window.partitionBy("series_bk").orderBy("effective_from")
+    return (
+        df.withColumn("effective_to", lead("effective_from", 1).over(w))
+        .withColumn("is_current", col("effective_to").isNull())
+    )
+
+
+def earliest_per_series(batch_df: DataFrame) -> DataFrame:
+    """Earliest row of each series in the batch (used to close the current version in the target)."""
+    w = Window.partitionBy("series_bk").orderBy("effective_from")
+    return (
+        batch_df.withColumn("_rn", row_number().over(w))
+        .filter(col("_rn") == 1)
+        .drop("_rn")
+        .select("series_bk", "effective_from", "price")
+    )
+
+
+def build_silver_prices(bronze_df: DataFrame) -> DataFrame:
+    """Full bronze -> silver prices transformation (without the two MERGE steps)."""
+    cleaned = clean_prices(bronze_df)
+    deduped = dedupe_latest(cleaned, ["series_bk", "effective_from"], "ingestion_timestamp")
+    with_sk = add_surrogate_key(deduped, ["series_bk", "effective_from"], "price_sk")
+    return (
+        add_validity_window(with_sk)
+        .withColumn("_source_system", lit("EIA_petroleum_prices"))
+        .withColumn("_ingested_at", expr("current_timestamp()"))
+        .withColumn("_updated_at", lit(None).cast("timestamp"))
+        .select(
+            "price_sk", "series_bk", "product_bk", "product_name", "units", "price",
+            "effective_from", "effective_to", "is_current",
+            "_source_system", "_ingested_at", "_updated_at",
+        )
+    )
+
+
 
