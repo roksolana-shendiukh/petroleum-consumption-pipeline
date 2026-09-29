@@ -1,0 +1,31 @@
+bundle:
+  name: petroleum_lab7
+
+variables:
+  cluster_id:
+    description: Existing cluster used to run the tests
+    default: 0828-065013-gln8ogbm
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405604651938730.10.azuredatabricks.net
+
+resources:
+  jobs:
+    unit_tests:
+      name: petroleum-unit-tests
+      tasks:
+        - task_key: pytest
+          existing_cluster_id: ${var.cluster_id}
+          spark_python_task:
+            python_file: tests/run_tests.py
+            parameters:
+              - ${workspace.file_path}
+          libraries:
+            - pypi:
+                package: pytest
+            - pypi:
+                package: tenacity
