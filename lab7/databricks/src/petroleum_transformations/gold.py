@@ -126,3 +126,4 @@ def aggregate_prices_monthly(weekly_df: DataFrame, dim_date_df: DataFrame, min_w
         "dim_date_key", "dim_product_key",
         "avg_price", "min_price", "max_price", "price_volatility", "weeks_count",
     )
+

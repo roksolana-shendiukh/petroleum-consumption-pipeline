@@ -3,7 +3,7 @@ bundle:
 
 variables:
   cluster_id:
-    description: Existing cluster used to run the tests
+    description: Existing cluster used to run the tests and notebooks
     default: 0828-065013-gln8ogbm
 
 targets:
@@ -27,5 +27,20 @@ resources:
           libraries:
             - pypi:
                 package: pytest
+            - pypi:
+                package: tenacity
+
+    gold_facts_weekly:
+      name: gold-facts-weekly
+      tasks:
+        - task_key: gold_facts_weekly
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: notebooks/gold_facts_weekly.py
+            base_parameters:
+              environment: dev
+              config_path: ${workspace.file_path}/config/pipeline_config.yaml
+              src_path: ${workspace.file_path}/src
+          libraries:
             - pypi:
                 package: tenacity
