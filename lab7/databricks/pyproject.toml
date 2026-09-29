@@ -1,5 +1,5 @@
 [project]
-name = "databricks"
+name = "petroleum-transformations"
 version = "0.0.1"
 authors = [{ name = "roksolana.shendiu770@softserve.academy" }]
 requires-python = ">=3.12,<3.13"
