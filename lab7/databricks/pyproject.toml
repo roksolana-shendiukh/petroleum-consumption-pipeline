@@ -3,13 +3,7 @@ name = "petroleum-transformations"
 version = "0.0.1"
 authors = [{ name = "roksolana.shendiu770@softserve.academy" }]
 requires-python = ">=3.12,<3.13"
-dependencies = [
-    # Any dependencies for jobs and pipelines in this project can be added here
-    # See also https://docs.databricks.com/dev-tools/bundles/library-dependencies
-    #
-    # LIMITATION: for pipelines, dependencies are cached during development;
-    # add dependencies to the 'environment' section of your pipeline.yml file instead
-]
+dependencies = []
 
 [dependency-groups]
 dev = [
@@ -18,9 +12,6 @@ dev = [
     "databricks-connect>=17.3,<17.4",
     "ipykernel",
 ]
-
-[project.scripts]
-main = "databricks.main:main"
 
 [build-system]
 requires = ["hatchling"]
