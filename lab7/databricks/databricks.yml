@@ -29,5 +29,7 @@ resources:
                 package: pytest
             - pypi:
                 package: tenacity
+            - pypi:
+                package: databricks-labs-dqx
 
     
