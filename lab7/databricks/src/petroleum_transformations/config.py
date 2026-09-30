@@ -48,6 +48,8 @@ def build_table_names(config: dict) -> dict[str, str]:
         "fct_prices_weekly": f"{c}.{g}.fct_snapshot_prices_weekly",
         "fct_consumption_monthly": f"{c}.{g}.fct_snapshot_consumption_monthly",
         "fct_prices_monthly": f"{c}.{g}.fct_snapshot_prices_monthly",
+        "dq_test_results": f"{c}.{g}.dq_test_results",
+        "dq_quarantine": f"{c}.{g}.dq_quarantine",
     }
 
 
