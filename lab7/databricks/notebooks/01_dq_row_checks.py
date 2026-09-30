@@ -1,4 +1,8 @@
 # Databricks notebook source
+# MAGIC %pip install databricks-labs-dqx
+
+# COMMAND ----------
+
 import sys
 import uuid
 from datetime import datetime, timezone

@@ -44,3 +44,16 @@ resources:
               config_path: ${workspace.file_path}/config/pipeline_config.yaml
               src_path: ${workspace.file_path}/src
               run_id: "{{job.run_id}}"
+              
+    dq_table_checks:
+      name: dq-table-checks
+      tasks:
+        - task_key: dq_table_checks
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: notebooks/02_dq_table_checks.py
+            base_parameters:
+              environment: dev
+              config_path: ${workspace.file_path}/config/pipeline_config.yaml
+              src_path: ${workspace.file_path}/src
+              run_id: "{{job.run_id}}"
