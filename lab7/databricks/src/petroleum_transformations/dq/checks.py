@@ -9,7 +9,6 @@ from petroleum_transformations.dq.rules import (
     build_coverage_specs,
     build_reconciliation_specs,
     build_reference_specs,
-    build_uniqueness_specs,
 )
 from petroleum_transformations.dq.runner import (
     QUARANTINE_SCHEMA,
@@ -63,25 +62,6 @@ def _tolerance_status(diff, pct, max_pct):
         return "PASSED"
     return "WARN" if pct <= max_pct else "FAILED"
 
-
-def check_uniqueness(ctx, layer, table_name, df, keys, severity):
-    keyed = df.dropna(subset=keys)
-    groups = keyed.groupBy(*keys).count()
-    metrics = groups.agg(
-        F.sum("count").alias("total"),
-        F.sum(F.when(F.col("count") > 1, F.col("count") - 1).otherwise(0)).alias("extra"),
-    ).collect()[0]
-    total = metrics["total"] or 0
-    extra = metrics["extra"] or 0
-    test_name = f"duplicate key ({', '.join(keys)})"
-    row = _row(ctx, layer, table_name, "uniqueness", test_name, total, extra, severity,
-               result_status(extra, severity))
-    if extra == 0:
-        return row, None
-    duplicated = groups.filter(F.col("count") > 1).select(*keys)
-    bad = keyed.join(duplicated, keys, "left_semi")
-    return row, _quarantine(ctx, layer, table_name, bad, df.columns, test_name,
-                            "key appears more than once", severity)
 
 
 def check_reference(ctx, layer, table_name, child, child_col, parent, parent_col, parent_name, severity):
@@ -175,12 +155,6 @@ def run_table_checks(spark: SparkSession, tables: dict, limits: dict, ctx: RunCo
         results.append(row)
         if quarantine is not None:
             quarantines.append(quarantine)
-
-    for layer, table, keys, severity in build_uniqueness_specs(tables):
-        name = _short(table)
-        guarded(layer, name, f"duplicate key ({', '.join(keys)})",
-                lambda t=table, k=keys, s=severity, l=layer, n=name:
-                check_uniqueness(ctx, l, n, spark.table(t), k, s))
 
     for layer, child, child_col, parent, parent_col, severity in build_reference_specs(tables):
         name = _short(child)

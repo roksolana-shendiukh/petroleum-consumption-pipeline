@@ -7,42 +7,9 @@ from petroleum_transformations.dq.checks import (
     check_coverage,
     check_reference,
     check_sum_reconciliation,
-    check_uniqueness,
 )
 
 CTX = RunContext("r1", datetime(2026, 1, 1, tzinfo=timezone.utc))
-
-
-def test_uniqueness_counts_extra_rows_and_quarantines_all_duplicates(spark):
-    df = spark.createDataFrame([(1, "a"), (1, "a"), (1, "a"), (2, "b")], "id int, name string")
-
-    row, quarantine = check_uniqueness(CTX, "gold", "t", df, ["id"], "error")
-
-    assert row["result"] == 2
-    assert row["total_rows"] == 4
-    assert row["status"] == "FAILED"
-    assert row["dimension"] == "uniqueness"
-    assert quarantine.count() == 3
-
-
-def test_uniqueness_clean_data_has_no_quarantine(spark):
-    df = spark.createDataFrame([(1,), (2,)], "id int")
-
-    row, quarantine = check_uniqueness(CTX, "gold", "t", df, ["id"], "error")
-
-    assert row["result"] == 0
-    assert row["status"] == "PASSED"
-    assert quarantine is None
-
-
-def test_uniqueness_ignores_null_keys_and_respects_warn(spark):
-    df = spark.createDataFrame([(None,), (None,), (1,), (1,)], "id int")
-
-    row, _ = check_uniqueness(CTX, "gold", "t", df, ["id"], "warn")
-
-    assert row["total_rows"] == 2
-    assert row["result"] == 1
-    assert row["status"] == "WARN"
 
 
 def test_reference_finds_orphans_and_quarantines_them(spark):

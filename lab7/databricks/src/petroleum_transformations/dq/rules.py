@@ -57,19 +57,6 @@ def load_row_suite(path, tables, limits):
     return suite
 
 
-def build_uniqueness_specs(t):
-    return [
-        ("silver", t["prices_silver"], ["series_bk", "effective_from"], "error"),
-        ("silver", t["consumption_silver"], ["series_bk", "duoarea_bk", "period_bk"], "error"),
-        ("gold", t["dim_date"], ["full_date"], "error"),
-        ("gold", t["dim_area"], ["area_code"], "error"),
-        ("gold", t["dim_product"], ["consumption_product_code"], "error"),
-        ("gold", t["fct_prices_weekly"], ["dim_date_key", "dim_product_key", "series_bk"], "error"),
-        ("gold", t["fct_prices_weekly"], ["dim_date_key", "dim_product_key"], "warn"),
-        ("gold", t["fct_consumption_weekly"], ["dim_date_key", "dim_product_key", "dim_area_key"], "error"),
-    ]
-
-
 def build_reference_specs(t):
     return [
         ("silver", t["prices_silver"], "effective_from", t["dim_date"], "full_date", "error"),

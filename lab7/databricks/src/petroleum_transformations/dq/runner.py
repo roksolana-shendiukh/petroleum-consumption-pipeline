@@ -14,6 +14,7 @@ RESULTS_SCHEMA = (
 QUARANTINE_SCHEMA = (
     "run_id string, table_name string, quarantined_at timestamp, record_json string, failed_checks string"
 )
+TRACE_FIELDS = ("rule_fingerprint", "rule_set_fingerprint")
 
 
 def create_dq_tables(spark: SparkSession, tables: dict) -> None:
@@ -37,9 +38,20 @@ def _severity(check: dict) -> str:
     return "error" if check.get("criticality", "error") == "error" else "warn"
 
 
-def _short_reasons(column: str):
+def _trace_fields(checked: DataFrame) -> list:
+    element = checked.schema["_errors"].dataType.elementType
+    present = set(element.fieldNames())
+    return [field for field in TRACE_FIELDS if field in present]
+
+
+def _short_reasons(column: str, trace_fields: list):
     return F.transform(
-        column, lambda e: F.struct(e["name"].alias("rule"), e["message"].alias("message"))
+        column,
+        lambda e: F.struct(
+            e["name"].alias("rule"),
+            e["message"].alias("message"),
+            *[e[field].alias(field) for field in trace_fields],
+        ),
     )
 
 
@@ -49,6 +61,29 @@ def _has_rule(column: str, name: str):
 
 def _is_bad_row():
     return (F.coalesce(F.size("_errors"), F.lit(0)) > 0) | (F.coalesce(F.size("_warnings"), F.lit(0)) > 0)
+
+
+def _referenced_columns(check: dict) -> list:
+    definition = check["check"]
+    arguments = definition.get("arguments") or {}
+    names = []
+    if "column" in arguments:
+        names.append(arguments["column"])
+    names.extend(arguments.get("columns") or [])
+    names.extend(definition.get("for_each_column") or [])
+    return [name for name in names if isinstance(name, str)]
+
+
+def missing_columns(df: DataFrame, checks: list) -> list:
+    available = {column.lower() for column in df.columns}
+    missing = []
+    for check in checks:
+        for name in _referenced_columns(check):
+            if "(" in name or " " in name:
+                continue
+            if name.split(".")[0].lower() not in available:
+                missing.append((check["name"], name))
+    return missing
 
 
 def _error_row(run_id, run_ts, layer, table_name, message):
@@ -61,7 +96,13 @@ def _error_row(run_id, run_ts, layer, table_name, message):
 
 def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, checks: list,
                    run_id: str, run_ts: datetime):
+    missing = missing_columns(df, checks)
+    if missing:
+        details = ", ".join(f"{rule}: {column}" for rule, column in missing)
+        raise ValueError(f"columns not found in {table_name}: {details}")
+
     checked = dq_engine.apply_checks_by_metadata(df, checks)
+    trace_fields = _trace_fields(checked)
 
     aggregates = [F.count(F.lit(1)).alias("total")]
     for i, check in enumerate(checks):
@@ -92,8 +133,8 @@ def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, checks
         F.lit(run_ts).cast("timestamp").alias("quarantined_at"),
         F.to_json(F.struct(*df.columns), {"ignoreNullFields": "false"}).alias("record_json"),
         F.to_json(F.struct(
-            _short_reasons("_errors").alias("errors"),
-            _short_reasons("_warnings").alias("warnings"),
+            _short_reasons("_errors", trace_fields).alias("errors"),
+            _short_reasons("_warnings", trace_fields).alias("warnings"),
         )).alias("failed_checks"),
     )
     return results, quarantine_df

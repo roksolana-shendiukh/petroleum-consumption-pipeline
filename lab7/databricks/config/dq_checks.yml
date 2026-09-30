@@ -35,6 +35,16 @@
           column: price
           min_limit: "{{ price_min }}"
           max_limit: "{{ price_max }}"
+    - name: duplicate key (series_bk, effective_from)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - series_bk
+            - effective_from
 
 - table: consumption_silver
   layer: silver
@@ -71,6 +81,43 @@
         function: is_not_null
         arguments:
           column: duoarea_bk
+    - name: duplicate key (series_bk, duoarea_bk, period_bk)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - series_bk
+            - duoarea_bk
+            - period_bk
+
+- table: dim_date
+  layer: gold
+  checks:
+    - name: duplicate key (full_date)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - full_date
+
+- table: dim_area
+  layer: gold
+  checks:
+    - name: duplicate key (area_code)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - area_code
 
 - table: dim_product
   layer: gold
@@ -83,6 +130,55 @@
         function: is_not_null
         arguments:
           column: price_product_code
+    - name: duplicate key (consumption_product_code)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - consumption_product_code
+
+- table: fct_prices_weekly
+  layer: gold
+  checks:
+    - name: duplicate key (dim_date_key, dim_product_key, series_bk)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - dim_date_key
+            - dim_product_key
+            - series_bk
+    - name: duplicate key (dim_date_key, dim_product_key)
+      criticality: warn
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - dim_date_key
+            - dim_product_key
+
+- table: fct_consumption_weekly
+  layer: gold
+  checks:
+    - name: duplicate key (dim_date_key, dim_product_key, dim_area_key)
+      criticality: error
+      user_metadata:
+        dimension: uniqueness
+      check:
+        function: is_unique
+        arguments:
+          columns:
+            - dim_date_key
+            - dim_product_key
+            - dim_area_key
 
 - table: fct_prices_monthly
   layer: gold

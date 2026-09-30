@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import pytest
 from databricks.labs.dqx.engine import DQEngine
 from databricks.sdk import WorkspaceClient
 
@@ -7,6 +8,7 @@ from petroleum_transformations.dq.runner import (
     RESULT_COLUMNS,
     RESULTS_SCHEMA,
     blocking_failures,
+    missing_columns,
     result_status,
     run_row_checks,
     run_suite,
@@ -21,6 +23,15 @@ def rule(name, column, criticality="error"):
         "criticality": criticality,
         "user_metadata": {"dimension": "completeness"},
         "check": {"function": "is_not_null", "arguments": {"column": column}},
+    }
+
+
+def unique_rule(name, columns, criticality="error"):
+    return {
+        "name": name,
+        "criticality": criticality,
+        "user_metadata": {"dimension": "uniqueness"},
+        "check": {"function": "is_unique", "arguments": {"columns": columns}},
     }
 
 
@@ -72,6 +83,16 @@ def test_quarantine_keeps_full_record_with_nulls_and_reason(spark):
     assert "id is null" in row["failed_checks"]
 
 
+def test_quarantine_reasons_carry_rule_fingerprints(spark):
+    df = spark.createDataFrame([(None, "b")], "id int, name string")
+
+    _, quarantine = run_row_checks(engine(), df, "t", "silver", checks(), "r1", RUN_TS)
+    failed_checks = quarantine.collect()[0]["failed_checks"]
+
+    assert "rule_fingerprint" in failed_checks
+    assert "rule_set_fingerprint" in failed_checks
+
+
 def test_quarantine_keeps_every_bad_row(spark):
     df = spark.createDataFrame([(None, "a")] * 5 + [(1, "b")], "id int, name string")
 
@@ -80,6 +101,51 @@ def test_quarantine_keeps_every_bad_row(spark):
 
     assert by_name["id is null"]["result"] == 5
     assert quarantine.count() == 5
+
+
+def test_is_unique_rule_flags_every_row_of_a_duplicated_key(spark):
+    df = spark.createDataFrame([(1, "a"), (1, "b"), (2, "c")], "id int, name string")
+
+    results, quarantine = run_row_checks(
+        engine(), df, "t", "gold", [unique_rule("duplicate key (id)", ["id"])], "r1", RUN_TS
+    )
+
+    assert results[0]["dimension"] == "uniqueness"
+    assert results[0]["result"] == 2
+    assert results[0]["status"] == "FAILED"
+    assert quarantine.count() == 2
+
+
+def test_missing_columns_lists_typos_and_ignores_nested_fields_and_expressions(spark):
+    df = spark.createDataFrame([(1, "a")], "id int, name string")
+    rules = [
+        rule("typo", "idd"),
+        rule("nested", "name.first"),
+        rule("expression", "try_element_at(tags, 1)"),
+        unique_rule("composite", ["id", "nmae"]),
+    ]
+
+    assert missing_columns(df, rules) == [("typo", "idd"), ("composite", "nmae")]
+
+
+def test_run_row_checks_refuses_a_check_on_a_missing_column(spark):
+    df = spark.createDataFrame([(1, "a")], "id int, name string")
+
+    with pytest.raises(ValueError, match="idd"):
+        run_row_checks(engine(), df, "t", "silver", [rule("typo", "idd")], "r1", RUN_TS)
+
+
+def test_run_suite_reports_a_typo_as_failed_execution(spark):
+    spark.createDataFrame([(1, "a")], "id int, name string").createOrReplaceTempView("dq_typo_view")
+    suite = [("silver", "dq_typo_view", [rule("typo", "idd")])]
+
+    results_df, _ = run_suite(spark, engine(), suite, "r1", RUN_TS)
+    row = results_df.collect()[0]
+
+    assert results_df.count() == 1
+    assert row["dimension"] == "execution"
+    assert row["status"] == "FAILED"
+    assert "idd" in row["test_name"]
 
 
 def test_run_suite_records_failure_when_table_is_missing(spark):

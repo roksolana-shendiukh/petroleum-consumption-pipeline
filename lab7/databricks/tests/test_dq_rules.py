@@ -94,7 +94,7 @@ def test_real_checks_file_is_valid_for_every_environment():
         cfg = load_config(str(ROOT / "config" / "pipeline_config.yaml"), environment)
         suite = load_row_suite(str(ROOT / "config" / "dq_checks.yml"), build_table_names(cfg), cfg["dq"])
 
-        assert len(suite) == 5
+        assert len(suite) == 9
         assert all(checks for _, _, checks in suite)
 
 def test_load_row_suite_rejects_semantically_duplicated_rules(tmp_path):
