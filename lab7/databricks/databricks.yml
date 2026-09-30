@@ -19,7 +19,7 @@ resources:
       name: petroleum-unit-tests
       tasks:
         - task_key: pytest
-          existing_cluster_id: ${var.cluster_id}
+          existing_cluster_id: 0924-102324-wnx9xwo2
           spark_python_task:
             python_file: tests/run_tests.py
             parameters:
@@ -44,7 +44,7 @@ resources:
               config_path: ${workspace.file_path}/config/pipeline_config.yaml
               src_path: ${workspace.file_path}/src
               run_id: "{{job.run_id}}"
-              
+
     dq_table_checks:
       name: dq-table-checks
       tasks:

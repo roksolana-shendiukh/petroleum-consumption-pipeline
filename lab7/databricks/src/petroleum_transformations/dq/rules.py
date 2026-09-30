@@ -84,6 +84,8 @@ def build_reference_specs(t):
         ("gold", t["fct_consumption_weekly"], "dim_date_key", t["dim_date"], "date_key", "error"),
         ("gold", t["fct_consumption_weekly"], "dim_product_key", t["dim_product"], "product_key", "error"),
         ("gold", t["fct_consumption_weekly"], "dim_area_key", t["dim_area"], "area_key", "error"),
+        ("gold", t["fct_consumption_monthly"], "dim_product_key", t["dim_product"], "product_key", "error"),
+        ("gold", t["fct_prices_monthly"], "dim_product_key", t["dim_product"], "product_key", "error"),
     ]
 
 
