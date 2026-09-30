@@ -1,0 +1,13 @@
+- name: price_product_code is null
+  criticality: warn
+  check:
+    function: is_not_null
+    arguments:
+      column: price_product_code
+- name: duplicate key (consumption_product_code)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - consumption_product_code

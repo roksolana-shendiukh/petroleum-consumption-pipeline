@@ -1,0 +1,7 @@
+- name: duplicate key (full_date)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - full_date

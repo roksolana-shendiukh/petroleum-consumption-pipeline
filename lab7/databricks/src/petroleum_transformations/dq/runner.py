@@ -1,7 +1,10 @@
+import re
 from datetime import datetime
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
+
+from petroleum_transformations.dq.rules import dimension_of
 
 RESULT_COLUMNS = [
     "run_id", "run_ts", "layer", "table_name", "dimension",
@@ -15,6 +18,7 @@ QUARANTINE_SCHEMA = (
     "run_id string, table_name string, quarantined_at timestamp, record_json string, failed_checks string"
 )
 TRACE_FIELDS = ("rule_fingerprint", "rule_set_fingerprint")
+PLAIN_COLUMN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*")
 
 
 def create_dq_tables(spark: SparkSession, tables: dict) -> None:
@@ -67,10 +71,12 @@ def _referenced_columns(check: dict) -> list:
     definition = check["check"]
     arguments = definition.get("arguments") or {}
     names = []
-    if "column" in arguments:
+    if isinstance(arguments.get("column"), str):
         names.append(arguments["column"])
-    names.extend(arguments.get("columns") or [])
-    names.extend(definition.get("for_each_column") or [])
+    if isinstance(arguments.get("columns"), list):
+        names.extend(arguments["columns"])
+    if isinstance(definition.get("for_each_column"), list):
+        names.extend(definition["for_each_column"])
     return [name for name in names if isinstance(name, str)]
 
 
@@ -79,7 +85,7 @@ def missing_columns(df: DataFrame, checks: list) -> list:
     missing = []
     for check in checks:
         for name in _referenced_columns(check):
-            if "(" in name or " " in name:
+            if not PLAIN_COLUMN.fullmatch(name):
                 continue
             if name.split(".")[0].lower() not in available:
                 missing.append((check["name"], name))
@@ -119,7 +125,7 @@ def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, checks
         any_violation = any_violation or count > 0
         results.append({
             "run_id": run_id, "run_ts": run_ts, "layer": layer, "table_name": table_name,
-            "dimension": check["user_metadata"]["dimension"], "test_name": check["name"],
+            "dimension": dimension_of(check), "test_name": check["name"],
             "total_rows": total, "result": count,
             "status": result_status(count, severity), "severity": severity,
         })

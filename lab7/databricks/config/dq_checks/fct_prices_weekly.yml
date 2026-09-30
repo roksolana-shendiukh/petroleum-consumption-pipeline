@@ -1,0 +1,17 @@
+- name: duplicate key (dim_date_key, dim_product_key, series_bk)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - dim_date_key
+        - dim_product_key
+        - series_bk
+- name: duplicate key (dim_date_key, dim_product_key)
+  criticality: warn
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - dim_date_key
+        - dim_product_key

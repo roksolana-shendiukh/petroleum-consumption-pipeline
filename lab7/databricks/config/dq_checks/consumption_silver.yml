@@ -1,0 +1,33 @@
+- name: consumption_sk is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: consumption_sk
+- name: series_bk is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: series_bk
+- name: period_bk is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: period_bk
+- name: duoarea_bk is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: duoarea_bk
+- name: duplicate key (series_bk, duoarea_bk, period_bk)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - series_bk
+        - duoarea_bk
+        - period_bk

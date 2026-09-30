@@ -1,0 +1,7 @@
+- name: duplicate key (area_code)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - area_code

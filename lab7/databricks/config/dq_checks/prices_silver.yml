@@ -1,0 +1,34 @@
+- name: price_sk is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: price_sk
+- name: series_bk is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: series_bk
+- name: effective_from is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: effective_from
+- name: "price not in {{ price_min }}..{{ price_max }}"
+  criticality: error
+  check:
+    function: is_in_range
+    arguments:
+      column: price
+      min_limit: "{{ price_min }}"
+      max_limit: "{{ price_max }}"
+- name: duplicate key (series_bk, effective_from)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - series_bk
+        - effective_from

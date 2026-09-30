@@ -1,0 +1,9 @@
+- name: duplicate key (dim_date_key, dim_product_key, dim_area_key)
+  criticality: error
+  check:
+    function: is_unique
+    arguments:
+      columns:
+        - dim_date_key
+        - dim_product_key
+        - dim_area_key

@@ -1,0 +1,8 @@
+- name: weeks_count out of range
+  criticality: error
+  check:
+    function: is_in_range
+    arguments:
+      column: weeks_count
+      min_limit: "{{ weeks_per_month_min }}"
+      max_limit: "{{ weeks_per_month_max }}"

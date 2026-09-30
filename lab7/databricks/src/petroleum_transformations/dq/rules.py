@@ -1,59 +1,63 @@
-import re
+from pathlib import Path
 
-import yaml
 from databricks.labs.dqx.checks_semantic_validator import ChecksSemanticValidationMode
+from databricks.labs.dqx.config import FileChecksStorageConfig
 from databricks.labs.dqx.engine import DQEngine
 
-_VARIABLE = re.compile(r"\{\{\s*(\w+)\s*\}\}")
+FUNCTION_DIMENSIONS = {
+    "is_not_null": "completeness",
+    "is_not_null_and_not_empty": "completeness",
+    "is_in_range": "validity",
+    "is_not_less_than": "validity",
+    "is_not_greater_than": "validity",
+    "is_in_list": "validity",
+    "is_valid_date": "validity",
+    "regex_match": "validity",
+    "is_unique": "uniqueness",
+}
 
 
-def _lookup(variables, name):
-    if name not in variables:
-        raise ValueError(f"Unknown variable '{name}' in DQ checks file")
-    return variables[name]
-
-
-def substitute(value, variables):
-    if isinstance(value, dict):
-        return {k: substitute(v, variables) for k, v in value.items()}
-    if isinstance(value, list):
-        return [substitute(v, variables) for v in value]
-    if isinstance(value, str):
-        whole = _VARIABLE.fullmatch(value.strip())
-        if whole:
-            return _lookup(variables, whole.group(1))
-        return _VARIABLE.sub(lambda m: str(_lookup(variables, m.group(1))), value)
-    return value
+def dimension_of(check):
+    override = (check.get("user_metadata") or {}).get("dimension")
+    if override:
+        return override
+    function = check["check"]["function"]
+    if function not in FUNCTION_DIMENSIONS:
+        raise ValueError(
+            f"Cannot derive a quality dimension for '{function}': "
+            "add it to FUNCTION_DIMENSIONS or set user_metadata.dimension"
+        )
+    return FUNCTION_DIMENSIONS[function]
 
 
 def validate_row_checks(checks, table_key):
-    names = [c.get("name") for c in checks]
+    names = [check.get("name") for check in checks]
     if not all(names):
         raise ValueError(f"[{table_key}] every check needs a name")
     if len(set(names)) != len(names):
         raise ValueError(f"[{table_key}] check names must be unique")
-    for c in checks:
-        if "dimension" not in (c.get("user_metadata") or {}):
-            raise ValueError(f"[{table_key}] check '{c['name']}' needs user_metadata.dimension")
+
     status = DQEngine.validate_checks(
         checks, semantic_validation_mode=ChecksSemanticValidationMode.FAIL
     )
     if status.has_errors:
-        raise ValueError(f"[{table_key}] invalid DQX checks: {status.errors}")
+        raise ValueError(f"[{table_key}] invalid DQX checks: {status}")
+
+    for check in checks:
+        dimension_of(check)
 
 
-def load_row_suite(path, tables, limits):
-    with open(path) as f:
-        entries = yaml.safe_load(f)
-
+def load_row_suite(dq_engine, directory, tables, limits):
     suite = []
-    for entry in entries:
-        key = entry["table"]
+    for path in sorted(Path(directory).glob("*.yml")):
+        key = path.stem
         if key not in tables:
-            raise ValueError(f"Unknown table '{key}' in DQ checks file")
-        checks = substitute(entry["checks"], limits)
+            raise ValueError(f"Unknown table '{key}' (file {path.name})")
+        checks = dq_engine.load_checks(FileChecksStorageConfig(location=str(path)), variables=limits)
         validate_row_checks(checks, key)
-        suite.append((entry["layer"], tables[key], checks))
+        suite.append((tables[key], checks))
+    if not suite:
+        raise ValueError(f"No DQ check files found in {directory}")
     return suite
 
 
