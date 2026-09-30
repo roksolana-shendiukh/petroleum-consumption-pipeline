@@ -52,3 +52,14 @@ results_df, quarantine_df = run_table_checks(spark, T, cfg["dq"], ctx)
 # COMMAND ----------
 
 write_dq_outputs(results_df, quarantine_df, T)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT run_id, count(*) AS checks, count(DISTINCT table_name) AS tables,
+# MAGIC        sum(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) AS failed,
+# MAGIC        sum(CASE WHEN status = 'WARN' THEN 1 ELSE 0 END) AS warned
+# MAGIC FROM dbr_dev_ua5816bd.roksolana_shendiu770_gold.dq_test_results
+# MAGIC GROUP BY run_id
+# MAGIC ORDER BY max(run_ts) DESC
+# MAGIC LIMIT 3;

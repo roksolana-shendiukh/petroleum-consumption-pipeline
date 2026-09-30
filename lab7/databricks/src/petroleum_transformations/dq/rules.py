@@ -1,62 +1,60 @@
-from databricks.labs.dqx import check_funcs
-from databricks.labs.dqx.rule import DQRowRule
+import re
+
+import yaml
+from databricks.labs.dqx.checks_semantic_validator import ChecksSemanticValidationMode
+from databricks.labs.dqx.engine import DQEngine
+
+_VARIABLE = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 
 
-def make_rule(name, dimension, func, column, criticality="error", **kwargs):
-    return DQRowRule(
-        name=name,
-        criticality=criticality,
-        check_func=func,
-        column=column,
-        check_func_kwargs=kwargs,
-        user_metadata={"dimension": dimension},
+def _lookup(variables, name):
+    if name not in variables:
+        raise ValueError(f"Unknown variable '{name}' in DQ checks file")
+    return variables[name]
+
+
+def substitute(value, variables):
+    if isinstance(value, dict):
+        return {k: substitute(v, variables) for k, v in value.items()}
+    if isinstance(value, list):
+        return [substitute(v, variables) for v in value]
+    if isinstance(value, str):
+        whole = _VARIABLE.fullmatch(value.strip())
+        if whole:
+            return _lookup(variables, whole.group(1))
+        return _VARIABLE.sub(lambda m: str(_lookup(variables, m.group(1))), value)
+    return value
+
+
+def validate_row_checks(checks, table_key):
+    names = [c.get("name") for c in checks]
+    if not all(names):
+        raise ValueError(f"[{table_key}] every check needs a name")
+    if len(set(names)) != len(names):
+        raise ValueError(f"[{table_key}] check names must be unique")
+    for c in checks:
+        if "dimension" not in (c.get("user_metadata") or {}):
+            raise ValueError(f"[{table_key}] check '{c['name']}' needs user_metadata.dimension")
+    status = DQEngine.validate_checks(
+        checks, semantic_validation_mode=ChecksSemanticValidationMode.FAIL
     )
+    if status.has_errors:
+        raise ValueError(f"[{table_key}] invalid DQX checks: {status.errors}")
 
 
-def weeks_rule(limits):
-    return make_rule(
-        "weeks_count out of range",
-        "validity",
-        check_funcs.is_in_range,
-        "weeks_count",
-        min_limit=limits["weeks_per_month_min"],
-        max_limit=limits["weeks_per_month_max"],
-    )
+def load_row_suite(path, tables, limits):
+    with open(path) as f:
+        entries = yaml.safe_load(f)
 
-
-def build_suite(tables, limits):
-    return [
-        ("silver", tables["prices_silver"], [
-            make_rule("price_sk is null", "completeness", check_funcs.is_not_null, "price_sk"),
-            make_rule("series_bk is null", "completeness", check_funcs.is_not_null, "series_bk"),
-            make_rule("effective_from is null", "completeness", check_funcs.is_not_null, "effective_from"),
-            make_rule(
-                f"price not in {limits['price_min']}..{limits['price_max']}",
-                "validity",
-                check_funcs.is_in_range,
-                "price",
-                min_limit=limits["price_min"],
-                max_limit=limits["price_max"],
-            ),
-        ]),
-        ("silver", tables["consumption_silver"], [
-            make_rule("consumption_sk is null", "completeness", check_funcs.is_not_null, "consumption_sk"),
-            make_rule("series_bk is null", "completeness", check_funcs.is_not_null, "series_bk"),
-            make_rule("period_bk is null", "completeness", check_funcs.is_not_null, "period_bk"),
-            make_rule("duoarea_bk is null", "completeness", check_funcs.is_not_null, "duoarea_bk"),
-        ]),
-        ("gold", tables["dim_product"], [
-            make_rule(
-                "price_product_code is null",
-                "completeness",
-                check_funcs.is_not_null,
-                "price_product_code",
-                criticality="warn",
-            ),
-        ]),
-        ("gold", tables["fct_prices_monthly"], [weeks_rule(limits)]),
-        ("gold", tables["fct_consumption_monthly"], [weeks_rule(limits)]),
-    ]
+    suite = []
+    for entry in entries:
+        key = entry["table"]
+        if key not in tables:
+            raise ValueError(f"Unknown table '{key}' in DQ checks file")
+        checks = substitute(entry["checks"], limits)
+        validate_row_checks(checks, key)
+        suite.append((entry["layer"], tables[key], checks))
+    return suite
 
 
 def build_uniqueness_specs(t):

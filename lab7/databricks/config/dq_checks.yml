@@ -1,0 +1,113 @@
+- table: prices_silver
+  layer: silver
+  checks:
+    - name: price_sk is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: price_sk
+    - name: series_bk is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: series_bk
+    - name: effective_from is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: effective_from
+    - name: "price not in {{ price_min }}..{{ price_max }}"
+      criticality: error
+      user_metadata:
+        dimension: validity
+      check:
+        function: is_in_range
+        arguments:
+          column: price
+          min_limit: "{{ price_min }}"
+          max_limit: "{{ price_max }}"
+
+- table: consumption_silver
+  layer: silver
+  checks:
+    - name: consumption_sk is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: consumption_sk
+    - name: series_bk is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: series_bk
+    - name: period_bk is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: period_bk
+    - name: duoarea_bk is null
+      criticality: error
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: duoarea_bk
+
+- table: dim_product
+  layer: gold
+  checks:
+    - name: price_product_code is null
+      criticality: warn
+      user_metadata:
+        dimension: completeness
+      check:
+        function: is_not_null
+        arguments:
+          column: price_product_code
+
+- table: fct_prices_monthly
+  layer: gold
+  checks:
+    - name: weeks_count out of range
+      criticality: error
+      user_metadata:
+        dimension: validity
+      check:
+        function: is_in_range
+        arguments:
+          column: weeks_count
+          min_limit: "{{ weeks_per_month_min }}"
+          max_limit: "{{ weeks_per_month_max }}"
+
+- table: fct_consumption_monthly
+  layer: gold
+  checks:
+    - name: weeks_count out of range
+      criticality: error
+      user_metadata:
+        dimension: validity
+      check:
+        function: is_in_range
+        arguments:
+          column: weeks_count
+          min_limit: "{{ weeks_per_month_min }}"
+          max_limit: "{{ weeks_per_month_max }}"

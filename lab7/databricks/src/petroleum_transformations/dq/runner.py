@@ -33,6 +33,10 @@ def result_status(violations: int, severity: str) -> str:
     return "FAILED" if severity == "error" else "WARN"
 
 
+def _severity(check: dict) -> str:
+    return "error" if check.get("criticality", "error") == "error" else "warn"
+
+
 def _short_reasons(column: str):
     return F.transform(
         column, lambda e: F.struct(e["name"].alias("rule"), e["message"].alias("message"))
@@ -55,26 +59,26 @@ def _error_row(run_id, run_ts, layer, table_name, message):
     }
 
 
-def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, rules: list,
+def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, checks: list,
                    run_id: str, run_ts: datetime):
-    checked = dq_engine.apply_checks(df, rules)
+    checked = dq_engine.apply_checks_by_metadata(df, checks)
 
     aggregates = [F.count(F.lit(1)).alias("total")]
-    for i, rule in enumerate(rules):
-        hit = _has_rule("_errors", rule.name) | _has_rule("_warnings", rule.name)
+    for i, check in enumerate(checks):
+        hit = _has_rule("_errors", check["name"]) | _has_rule("_warnings", check["name"])
         aggregates.append(F.sum(F.when(hit, 1).otherwise(0)).alias(f"v{i}"))
     metrics = checked.agg(*aggregates).collect()[0]
 
     total = metrics["total"]
     results = []
     any_violation = False
-    for i, rule in enumerate(rules):
-        severity = "error" if rule.criticality == "error" else "warn"
+    for i, check in enumerate(checks):
+        severity = _severity(check)
         count = metrics[f"v{i}"] or 0
         any_violation = any_violation or count > 0
         results.append({
             "run_id": run_id, "run_ts": run_ts, "layer": layer, "table_name": table_name,
-            "dimension": rule.user_metadata["dimension"], "test_name": rule.name,
+            "dimension": check["user_metadata"]["dimension"], "test_name": check["name"],
             "total_rows": total, "result": count,
             "status": result_status(count, severity), "severity": severity,
         })
@@ -99,11 +103,11 @@ def run_suite(spark: SparkSession, dq_engine, suite: list, run_id: str, run_ts: 
     results = []
     quarantine_df = None
 
-    for layer, table, rules in suite:
+    for layer, table, checks in suite:
         short_name = table.split(".")[-1]
         try:
             table_results, table_quarantine = run_row_checks(
-                dq_engine, spark.table(table), short_name, layer, rules, run_id, run_ts
+                dq_engine, spark.table(table), short_name, layer, checks, run_id, run_ts
             )
         except Exception as e:
             results.append(_error_row(run_id, run_ts, layer, short_name, str(e).splitlines()[0]))
