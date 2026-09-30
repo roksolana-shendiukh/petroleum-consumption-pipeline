@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 from databricks.labs.dqx.engine import DQEngine
 from databricks.sdk import WorkspaceClient
-from pyspark.sql import functions as F
 
 dbutils.widgets.text("environment", "dev")
 dbutils.widgets.text("config_path", "")
@@ -40,4 +39,7 @@ results_df, quarantine_df = run_suite(
 
 # COMMAND ----------
 
-write_dq_outputs(results_df, quarantine_df, T)
+create_dq_tables(spark, T)
+results_df, quarantine_df = run_suite(
+    spark, DQEngine(WorkspaceClient()), build_suite(T, cfg["dq"]), RUN_ID, RUN_TS
+)

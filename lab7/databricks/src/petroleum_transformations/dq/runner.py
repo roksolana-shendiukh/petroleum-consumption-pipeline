@@ -39,13 +39,12 @@ def _short_reasons(column: str):
     )
 
 
-def _violations_by_rule(checked: DataFrame) -> dict:
-    counts = {}
-    for column in ("_errors", "_warnings"):
-        rows = checked.select(F.explode(column).alias("e")).groupBy("e.name").count().collect()
-        for row in rows:
-            counts[row["name"]] = row["count"]
-    return counts
+def _has_rule(column: str, name: str):
+    return F.coalesce(F.exists(column, lambda e: e["name"] == name), F.lit(False))
+
+
+def _is_bad_row():
+    return (F.coalesce(F.size("_errors"), F.lit(0)) > 0) | (F.coalesce(F.size("_warnings"), F.lit(0)) > 0)
 
 
 def _error_row(run_id, run_ts, layer, table_name, message):
@@ -58,14 +57,21 @@ def _error_row(run_id, run_ts, layer, table_name, message):
 
 def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, rules: list,
                    run_id: str, run_ts: datetime):
-    total = df.count()
     checked = dq_engine.apply_checks(df, rules)
-    violations = _violations_by_rule(checked)
 
+    aggregates = [F.count(F.lit(1)).alias("total")]
+    for i, rule in enumerate(rules):
+        hit = _has_rule("_errors", rule.name) | _has_rule("_warnings", rule.name)
+        aggregates.append(F.sum(F.when(hit, 1).otherwise(0)).alias(f"v{i}"))
+    metrics = checked.agg(*aggregates).collect()[0]
+
+    total = metrics["total"]
     results = []
-    for rule in rules:
+    any_violation = False
+    for i, rule in enumerate(rules):
         severity = "error" if rule.criticality == "error" else "warn"
-        count = violations.get(rule.name, 0)
+        count = metrics[f"v{i}"] or 0
+        any_violation = any_violation or count > 0
         results.append({
             "run_id": run_id, "run_ts": run_ts, "layer": layer, "table_name": table_name,
             "dimension": rule.user_metadata["dimension"], "test_name": rule.name,
@@ -73,8 +79,10 @@ def run_row_checks(dq_engine, df: DataFrame, table_name: str, layer: str, rules:
             "status": result_status(count, severity), "severity": severity,
         })
 
-    bad = checked.filter((F.size("_errors") > 0) | (F.size("_warnings") > 0))
-    quarantine_df = bad.select(
+    if not any_violation:
+        return results, df.sparkSession.createDataFrame([], QUARANTINE_SCHEMA)
+
+    quarantine_df = checked.filter(_is_bad_row()).select(
         F.lit(run_id).alias("run_id"),
         F.lit(f"{layer}.{table_name}").alias("table_name"),
         F.lit(run_ts).cast("timestamp").alias("quarantined_at"),

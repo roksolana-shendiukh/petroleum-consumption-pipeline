@@ -6,6 +6,8 @@ from databricks.sdk import WorkspaceClient
 
 from petroleum_transformations.dq.rules import make_rule
 from petroleum_transformations.dq.runner import (
+    RESULT_COLUMNS,
+    RESULTS_SCHEMA,
     blocking_failures,
     result_status,
     run_row_checks,
@@ -66,6 +68,16 @@ def test_quarantine_keeps_full_record_with_nulls_and_reason(spark):
     assert "id is null" in row["failed_checks"]
 
 
+def test_quarantine_keeps_every_bad_row(spark):
+    df = spark.createDataFrame([(None, "a")] * 5 + [(1, "b")], "id int, name string")
+
+    results, quarantine = run_row_checks(engine(), df, "t", "silver", rules(), "r1", RUN_TS)
+    by_name = {r["test_name"]: r for r in results}
+
+    assert by_name["id is null"]["result"] == 5
+    assert quarantine.count() == 5
+
+
 def test_run_suite_records_failure_when_table_is_missing(spark):
     suite = [("silver", "no_such_catalog.no_such_schema.no_such_table", rules())]
 
@@ -81,11 +93,6 @@ def test_run_suite_records_failure_when_table_is_missing(spark):
 def test_blocking_failures_ignores_warnings(spark):
     df = spark.createDataFrame([(1, None)], "id int, name string")
     results, _ = run_row_checks(engine(), df, "t", "silver", rules(), "r1", RUN_TS)
-    rows = [tuple(r[c] for c in r) for r in results]
-    results_df = spark.createDataFrame(
-        rows,
-        "run_id string, run_ts timestamp, layer string, table_name string, dimension string, "
-        "test_name string, total_rows bigint, result bigint, status string, severity string",
-    )
+    rows = [tuple(r[c] for c in RESULT_COLUMNS) for r in results]
 
-    assert blocking_failures(results_df) == []
+    assert blocking_failures(spark.createDataFrame(rows, RESULTS_SCHEMA)) == []

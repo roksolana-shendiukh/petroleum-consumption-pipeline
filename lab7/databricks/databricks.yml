@@ -32,4 +32,15 @@ resources:
             - pypi:
                 package: databricks-labs-dqx
 
-    
+    dq_row_checks:
+      name: dq-row-checks
+      tasks:
+        - task_key: dq_row_checks
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: notebooks/01_dq_row_checks.py
+            base_parameters:
+              environment: dev
+              config_path: ${workspace.file_path}/config/pipeline_config.yaml
+              src_path: ${workspace.file_path}/src
+              run_id: "{{job.run_id}}"
