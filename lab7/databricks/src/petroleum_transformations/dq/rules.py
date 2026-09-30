@@ -57,3 +57,80 @@ def build_suite(tables, limits):
         ("gold", tables["fct_prices_monthly"], [weeks_rule(limits)]),
         ("gold", tables["fct_consumption_monthly"], [weeks_rule(limits)]),
     ]
+
+
+def build_uniqueness_specs(t):
+    return [
+        ("silver", t["prices_silver"], ["series_bk", "effective_from"], "error"),
+        ("silver", t["consumption_silver"], ["series_bk", "duoarea_bk", "period_bk"], "error"),
+        ("gold", t["dim_date"], ["full_date"], "error"),
+        ("gold", t["dim_area"], ["area_code"], "error"),
+        ("gold", t["dim_product"], ["consumption_product_code"], "error"),
+        ("gold", t["fct_prices_weekly"], ["dim_date_key", "dim_product_key", "series_bk"], "error"),
+        ("gold", t["fct_prices_weekly"], ["dim_date_key", "dim_product_key"], "warn"),
+        ("gold", t["fct_consumption_weekly"], ["dim_date_key", "dim_product_key", "dim_area_key"], "error"),
+    ]
+
+
+def build_reference_specs(t):
+    return [
+        ("silver", t["prices_silver"], "effective_from", t["dim_date"], "full_date", "error"),
+        ("silver", t["prices_silver"], "product_bk", t["dim_product"], "price_product_code", "error"),
+        ("silver", t["consumption_silver"], "period_bk", t["dim_date"], "full_date", "error"),
+        ("silver", t["consumption_silver"], "product_bk", t["dim_product"], "consumption_product_code", "error"),
+        ("silver", t["consumption_silver"], "duoarea_bk", t["dim_area"], "area_code", "error"),
+        ("gold", t["fct_prices_weekly"], "dim_date_key", t["dim_date"], "date_key", "error"),
+        ("gold", t["fct_prices_weekly"], "dim_product_key", t["dim_product"], "product_key", "error"),
+        ("gold", t["fct_consumption_weekly"], "dim_date_key", t["dim_date"], "date_key", "error"),
+        ("gold", t["fct_consumption_weekly"], "dim_product_key", t["dim_product"], "product_key", "error"),
+        ("gold", t["fct_consumption_weekly"], "dim_area_key", t["dim_area"], "area_key", "error"),
+    ]
+
+
+def build_coverage_specs(t):
+    return [
+        ("gold", t["dim_date"], "full_date", t["prices_silver"], "effective_from", "error"),
+        ("gold", t["dim_date"], "full_date", t["consumption_silver"], "period_bk", "error"),
+    ]
+
+
+def build_age_specs(t):
+    return [
+        ("silver", t["prices_silver"], "effective_from", "warn"),
+        ("silver", t["consumption_silver"], "period_bk", "warn"),
+    ]
+
+
+def build_reconciliation_specs(t):
+    return [
+        {
+            "kind": "count", "layer": "silver",
+            "name": "distinct keys lost bronze -> silver",
+            "source": t["consumption_bronze"], "source_distinct": ["series", "duoarea", "period"],
+            "target": t["consumption_silver"], "target_distinct": ["series_bk", "duoarea_bk", "period_bk"],
+        },
+        {
+            "kind": "count", "layer": "silver",
+            "name": "distinct keys lost bronze -> silver",
+            "source": t["prices_bronze"], "source_distinct": ["series", "period"],
+            "target": t["prices_silver"], "target_distinct": ["series_bk", "effective_from"],
+        },
+        {
+            "kind": "count", "layer": "gold",
+            "name": "rows lost silver -> gold weekly",
+            "source": t["prices_silver"], "source_distinct": None,
+            "target": t["fct_prices_weekly"], "target_distinct": None,
+        },
+        {
+            "kind": "count", "layer": "gold",
+            "name": "rows lost silver -> gold weekly",
+            "source": t["consumption_silver"], "source_distinct": None,
+            "target": t["fct_consumption_weekly"], "target_distinct": None,
+        },
+        {
+            "kind": "sum", "layer": "gold",
+            "name": "sum of consumption_value differs silver -> gold weekly",
+            "source": t["consumption_silver"], "source_col": "consumption_value",
+            "target": t["fct_consumption_weekly"], "target_col": "consumption_value",
+        },
+    ]

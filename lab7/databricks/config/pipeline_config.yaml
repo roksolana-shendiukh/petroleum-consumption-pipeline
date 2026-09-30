@@ -17,6 +17,9 @@ dev:
     price_max: 20
     weeks_per_month_min: 1
     weeks_per_month_max: 5
+    dim_date_max_lag_days: 0
+    max_age_days: 14
+    reconciliation_max_loss_pct: 0.5
 
 prod:
   catalog: dbr_prod_ua5816bd
@@ -37,3 +40,6 @@ prod:
     price_max: 20
     weeks_per_month_min: 1
     weeks_per_month_max: 5
+    dim_date_max_lag_days: 0
+    max_age_days: 14
+    reconciliation_max_loss_pct: 0.5
