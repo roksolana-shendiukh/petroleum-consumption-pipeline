@@ -108,6 +108,13 @@ def test_count_reconciliation_uses_tolerance(spark):
     assert large["result"] == 100
 
 
+def test_count_reconciliation_flags_surplus_in_target(spark):
+    row, _ = check_count_reconciliation(CTX, "gold", "t", "n", spark.range(1000), spark.range(1200), 0.5)
+
+    assert row["result"] == 200
+    assert row["status"] == "FAILED"
+
+
 def test_sum_reconciliation_detects_value_loss(spark):
     source = spark.createDataFrame([(100.0,), (50.0,)], "v double")
     target = spark.createDataFrame([(100.0,)], "v double")

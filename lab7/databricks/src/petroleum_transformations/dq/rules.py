@@ -105,25 +105,25 @@ def build_reconciliation_specs(t):
     return [
         {
             "kind": "count", "layer": "silver",
-            "name": "distinct keys lost bronze -> silver",
+            "name": "distinct keys differ bronze -> silver",
             "source": t["consumption_bronze"], "source_distinct": ["series", "duoarea", "period"],
             "target": t["consumption_silver"], "target_distinct": ["series_bk", "duoarea_bk", "period_bk"],
         },
         {
             "kind": "count", "layer": "silver",
-            "name": "distinct keys lost bronze -> silver",
+            "name": "distinct keys differ bronze -> silver",
             "source": t["prices_bronze"], "source_distinct": ["series", "period"],
             "target": t["prices_silver"], "target_distinct": ["series_bk", "effective_from"],
         },
         {
             "kind": "count", "layer": "gold",
-            "name": "rows lost silver -> gold weekly",
+            "name": "row count differs silver -> gold weekly",
             "source": t["prices_silver"], "source_distinct": None,
             "target": t["fct_prices_weekly"], "target_distinct": None,
         },
         {
             "kind": "count", "layer": "gold",
-            "name": "rows lost silver -> gold weekly",
+            "name": "row count differs silver -> gold weekly",
             "source": t["consumption_silver"], "source_distinct": None,
             "target": t["fct_consumption_weekly"], "target_distinct": None,
         },

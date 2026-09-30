@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import NamedTuple
 
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from petroleum_transformations.dq.rules import (
@@ -58,10 +58,10 @@ def _quarantine(ctx, layer, table_name, bad, columns, rule, message, severity):
     )
 
 
-def _tolerance_status(lost, pct, max_loss_pct):
-    if lost == 0:
+def _tolerance_status(diff, pct, max_pct):
+    if diff == 0:
         return "PASSED"
-    return "WARN" if pct <= max_loss_pct else "FAILED"
+    return "WARN" if pct <= max_pct else "FAILED"
 
 
 def check_uniqueness(ctx, layer, table_name, df, keys, severity):
@@ -137,16 +137,16 @@ def check_age(ctx, layer, table_name, df, column, allowed_days, severity):
                 result_status(over, severity)), None
 
 
-def check_count_reconciliation(ctx, layer, table_name, name, source, target, max_loss_pct):
+def check_count_reconciliation(ctx, layer, table_name, name, source, target, max_diff_pct):
     source_rows = source.count()
     target_rows = target.count()
-    lost = max(source_rows - target_rows, 0)
-    pct = 100.0 * lost / source_rows if source_rows else 0.0
-    return _row(ctx, layer, table_name, "consistency", name, source_rows, lost, "error",
-                _tolerance_status(lost, pct, max_loss_pct)), None
+    diff = abs(source_rows - target_rows)
+    pct = 100.0 * diff / source_rows if source_rows else 0.0
+    return _row(ctx, layer, table_name, "consistency", name, source_rows, diff, "error",
+                _tolerance_status(diff, pct, max_diff_pct)), None
 
 
-def check_sum_reconciliation(ctx, layer, table_name, name, source, source_col, target, target_col, max_loss_pct):
+def check_sum_reconciliation(ctx, layer, table_name, name, source, source_col, target, target_col, max_diff_pct):
     source_metrics = source.agg(F.sum(source_col).alias("s"), F.count(F.lit(1)).alias("n")).collect()[0]
     target_sum = float(target.agg(F.sum(target_col)).collect()[0][0] or 0)
     source_sum = float(source_metrics["s"] or 0)
@@ -154,7 +154,7 @@ def check_sum_reconciliation(ctx, layer, table_name, name, source, source_col, t
     pct = 100.0 * diff / abs(source_sum) if source_sum else 0.0
     lost = int(round(diff))
     return _row(ctx, layer, table_name, "consistency", name, source_metrics["n"], lost, "error",
-                _tolerance_status(lost, pct, max_loss_pct)), None
+                _tolerance_status(lost, pct, max_diff_pct)), None
 
 
 def _side(spark, table, distinct):
