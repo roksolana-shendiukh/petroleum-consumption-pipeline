@@ -96,3 +96,28 @@ def test_real_checks_file_is_valid_for_every_environment():
 
         assert len(suite) == 5
         assert all(checks for _, _, checks in suite)
+
+def test_load_row_suite_rejects_semantically_duplicated_rules(tmp_path):
+    first = good_check(name="price_sk is null")
+    second = good_check(name="price_sk is missing")
+
+    with pytest.raises(ValueError):
+        load_row_suite(write_checks(tmp_path, entry([first, second])), TABLES, LIMITS)
+
+
+def test_load_row_suite_rejects_conflicting_thresholds(tmp_path):
+    def in_range(name, max_limit):
+        return good_check(
+            name=name,
+            check={
+                "function": "is_in_range",
+                "arguments": {"column": "price", "min_limit": 0.01, "max_limit": max_limit},
+            },
+        )
+
+    with pytest.raises(ValueError):
+        load_row_suite(
+            write_checks(tmp_path, entry([in_range("price low", 20), in_range("price high", 50)])),
+            TABLES,
+            LIMITS,
+        )
