@@ -7,7 +7,7 @@ dependencies = [
     "pyyaml",
     "requests",
     "tenacity",
-    "databricks-labs-dqx",
+    "databricks-labs-dqx==0.16.0",
 ]
 
 [dependency-groups]

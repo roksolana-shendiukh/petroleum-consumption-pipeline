@@ -30,7 +30,7 @@ resources:
             - pypi:
                 package: tenacity
             - pypi:
-                package: databricks-labs-dqx
+                package: databricks-labs-dqx==0.16.0
 
     dq_suite:
       name: petroleum-dq-suite
