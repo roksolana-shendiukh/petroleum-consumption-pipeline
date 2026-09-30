@@ -105,6 +105,3 @@ def build_silver_prices(bronze_df: DataFrame) -> DataFrame:
             "_source_system", "_ingested_at", "_updated_at",
         )
     )
-
-
-

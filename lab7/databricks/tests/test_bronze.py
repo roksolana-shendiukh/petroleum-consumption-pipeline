@@ -1,7 +1,5 @@
 from datetime import date
-
 import pytest
-
 from petroleum_transformations.bronze import (
     build_product_price_mapping,
     extract_product_codes,
@@ -56,7 +54,7 @@ def test_group_codes_by_route_unknown_route_raises():
     m = build_product_price_mapping(MAPPING_ROWS)
 
     with pytest.raises(KeyError):
-        group_codes_by_route({"EPD0"}, m, {"gnd": "http://gnd"})  # 'spt' missing
+        group_codes_by_route({"EPD0"}, m, {"gnd": "http://gnd"})  
 
 
 def test_prepare_bronze_adds_metadata_and_dedupes(spark):
@@ -70,3 +68,4 @@ def test_prepare_bronze_adds_metadata_and_dedupes(spark):
     assert result.count() == 2
     assert {"ingestion_timestamp", "load_date"} <= set(result.columns)
     assert result.filter("ingestion_timestamp is null or load_date is null").count() == 0
+    

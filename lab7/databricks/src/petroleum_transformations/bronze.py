@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import current_date, current_timestamp
 

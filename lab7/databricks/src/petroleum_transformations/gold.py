@@ -1,9 +1,5 @@
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import broadcast, col
-from pyspark.sql.functions import avg, count
-from pyspark.sql.functions import max as spark_max
-from pyspark.sql.functions import min as spark_min
-from pyspark.sql.functions import sum as spark_sum
+from pyspark.sql.functions import broadcast, col, avg, count, max as spark_max, min as spark_min, sum as spark_sum
 
 
 def build_dim_product(mapping_df: DataFrame, consumption_silver_df: DataFrame) -> DataFrame:
@@ -126,4 +122,3 @@ def aggregate_prices_monthly(weekly_df: DataFrame, dim_date_df: DataFrame, min_w
         "dim_date_key", "dim_product_key",
         "avg_price", "min_price", "max_price", "price_volatility", "weeks_count",
     )
-

@@ -97,3 +97,4 @@ def test_fetch_page_gives_up_after_three_attempts(monkeypatch):
         fetch_page(URL, 0, "2026-01-01", "2026-02-01", api_key="KEY")
 
     assert len(calls) == 3
+    

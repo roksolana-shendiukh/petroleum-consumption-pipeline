@@ -1,8 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-
 import pytest
-
 from petroleum_transformations.silver import (
     add_surrogate_key,
     build_silver_consumption,
@@ -88,4 +86,3 @@ def test_build_silver_consumption_end_to_end(spark):
     assert rows[0]["_source_system"] == "EIA_petroleum_consumption"
     assert rows[0]["_updated_at"] is None
     assert "consumption_sk" in result.columns
-

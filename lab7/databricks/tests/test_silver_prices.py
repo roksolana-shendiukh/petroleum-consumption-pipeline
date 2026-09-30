@@ -1,6 +1,5 @@
 from datetime import date, datetime
 from decimal import Decimal
-
 from petroleum_transformations.silver import (
     add_validity_window,
     build_silver_prices,
@@ -110,3 +109,4 @@ def test_build_silver_prices_end_to_end(spark):
     assert rows[0]["price_sk"] != rows[1]["price_sk"]
     assert rows[0]["_source_system"] == "EIA_petroleum_prices"
     assert rows[0]["_updated_at"] is None
+    

@@ -1,5 +1,4 @@
 import posixpath
-
 import yaml
 
 REQUIRED_KEYS = [
