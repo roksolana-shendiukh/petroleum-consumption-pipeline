@@ -36,8 +36,19 @@ resources:
       name: petroleum-dq-suite
       max_concurrent_runs: 1
       tasks:
+        - task_key: deploy_checks
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: notebooks/00_dq_deploy_checks.py
+            base_parameters:
+              environment: dev
+              config_path: ${workspace.file_path}/config/pipeline_config.yaml
+              src_path: ${workspace.file_path}/src
+
         - task_key: row_checks
-          existing_cluster_id: 0924-102324-wnx9xwo2
+          depends_on:
+            - task_key: deploy_checks
+          existing_cluster_id: ${var.cluster_id}
           notebook_task:
             notebook_path: notebooks/01_dq_row_checks.py
             base_parameters:
@@ -50,7 +61,7 @@ resources:
           depends_on:
             - task_key: row_checks
           run_if: ALL_DONE
-          existing_cluster_id: 0924-102324-wnx9xwo2
+          existing_cluster_id: ${var.cluster_id}
           notebook_task:
             notebook_path: notebooks/02_dq_table_checks.py
             base_parameters:
