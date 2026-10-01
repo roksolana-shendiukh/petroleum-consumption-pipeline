@@ -15,7 +15,7 @@ dev:
   dq:
     price_min: 0.01
     price_max: 20
-    weeks_per_month_min: 1
+    weeks_per_month_min: 4
     weeks_per_month_max: 5
     dim_date_max_lag_days: 0
     max_age_days: 14
@@ -38,7 +38,7 @@ prod:
   dq:
     price_min: 0.01
     price_max: 20
-    weeks_per_month_min: 1
+    weeks_per_month_min: 4
     weeks_per_month_max: 5
     dim_date_max_lag_days: 0
     max_age_days: 14
