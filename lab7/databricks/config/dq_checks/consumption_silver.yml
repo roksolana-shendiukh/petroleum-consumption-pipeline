@@ -22,6 +22,14 @@
     function: is_not_null
     arguments:
       column: duoarea_bk
+- name: units is not an accepted value
+  criticality: error
+  check:
+    function: is_in_list
+    arguments:
+      column: units
+      allowed:
+        - "'MBBL/D'"
 - name: duplicate key (series_bk, duoarea_bk, period_bk)
   criticality: error
   check:

@@ -24,6 +24,14 @@
       column: price
       min_limit: "{{ price_min }}"
       max_limit: "{{ price_max }}"
+- name: units is not an accepted value
+  criticality: error
+  check:
+    function: is_in_list
+    arguments:
+      column: units
+      allowed:
+        - "'$/GAL'"
 - name: duplicate key (series_bk, effective_from)
   criticality: error
   check:
