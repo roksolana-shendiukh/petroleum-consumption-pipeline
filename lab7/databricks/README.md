@@ -13,8 +13,6 @@ Transformation logic from the pipeline notebooks was extracted into importable m
 
 `MERGE` and table I/O are integration level and not unit-tested.
 
-![Unit tests passed](../../screenshots/lab7_unit_tests_passed.png)
-
 ## Part B: Data quality
 
 DQX checks run on the real tables of all three layers and write the results to tables. Existing tables are not changed.
@@ -28,3 +26,4 @@ DQX checks run on the real tables of all three layers and write the results to t
 - **Cross-table:** referential integrity, reconciliation between layers and freshness are separate checks.
 
 The suite found real problems, for example 6,446 fact rows with outdated product keys and 88 prices without a date.
+The lab 5 Lakeflow pipeline already drops bad rows and writes them to quarantine tables. Each rule set is defined once (DRY) and used for both.
