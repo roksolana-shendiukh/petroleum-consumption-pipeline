@@ -2,7 +2,7 @@
 
 ## Part A: Unit tests
 
-Transformation logic from the pipeline notebooks was extracted into importable modules (`src/petroleum_transformations/`: config, eia_client, bronze, silver, gold) and covered with 38 `pytest` unit tests (`tests/`).
+Transformation logic from the pipeline notebooks was extracted into importable modules (`src/petroleum_transformations/`: config, eia_client, bronze, silver, gold).
 
 **Characteristics of the tests:**
 - **Isolated:** each test targets one pure `DataFrame -> DataFrame` function on a few hand-made rows; no real tables are read or written.
