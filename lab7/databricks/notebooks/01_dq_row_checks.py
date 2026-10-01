@@ -1,13 +1,8 @@
 # Databricks notebook source
-# MAGIC %pip install databricks-labs-dqx
-
-# COMMAND ----------
-
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
-import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -25,14 +20,13 @@ project_root = "/Workspace" + notebook_path.rsplit("/notebooks/", 1)[0]
 
 config_path = dbutils.widgets.get("config_path") or f"{project_root}/config/pipeline_config.yaml"
 src_path = dbutils.widgets.get("src_path") or f"{project_root}/src"
-checks_path = os.path.join(os.path.dirname(config_path), "dq_checks.yml")
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, src_path)
 
 from petroleum_transformations.config import build_table_names, load_config
-from petroleum_transformations.dq.rules import load_row_suite
 from petroleum_transformations.dq.runner import create_dq_tables, run_suite, write_dq_outputs
+from petroleum_transformations.dq.storage import load_suite
 
 cfg = load_config(config_path, dbutils.widgets.get("environment"))
 T = build_table_names(cfg)
@@ -42,14 +36,10 @@ RUN_TS = datetime.now(timezone.utc)
 
 # COMMAND ----------
 
+dq = DQEngine(WorkspaceClient())
 create_dq_tables(spark, T)
-results_df, quarantine_df = run_suite(
-    spark, DQEngine(WorkspaceClient()), load_row_suite(checks_path, T, cfg["dq"]), RUN_ID, RUN_TS
-)
+results_df, quarantine_df = run_suite(spark, dq, load_suite(spark, dq, T["dq_checks"], cfg), RUN_ID, RUN_TS)
 
 # COMMAND ----------
 
-create_dq_tables(spark, T)
-results_df, quarantine_df = run_suite(
-    spark, DQEngine(WorkspaceClient()), build_suite(T, cfg["dq"]), RUN_ID, RUN_TS
-)
+write_dq_outputs(results_df, quarantine_df, T)
