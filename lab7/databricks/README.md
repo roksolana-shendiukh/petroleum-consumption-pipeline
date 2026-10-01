@@ -16,3 +16,15 @@ Transformation logic from the pipeline notebooks was extracted into importable m
 ![Unit tests passed](../../screenshots/lab7_unit_tests_passed.png)
 
 ## Part B: Data quality
+
+DQX checks run on the real tables of all three layers and write the results to tables. Existing tables are not changed.
+
+**Characteristics:**
+- **Declarative:** rules are YAML files, one per table; thresholds come from the config.
+- **Validated:** rules are checked for errors and duplicates before they run.
+- **Versioned:** a job deploys the rules to the Delta table `dq_checks`.
+- **Measured:** `dq_test_results` has one row per check: dimension, rows checked, violations, status.
+- **Traceable:** `dq_quarantine` keeps every bad record as JSON with the failed rule.
+- **Cross-table:** referential integrity, reconciliation between layers and freshness are separate checks.
+
+The suite found real problems, for example 6,446 fact rows with outdated product keys and 88 prices without a date.
