@@ -32,3 +32,27 @@
       columns:
         - series_bk
         - effective_from
+- name: is_current does not match effective_to
+  criticality: error
+  user_metadata:
+    dimension: consistency
+  check:
+    function: sql_expression
+    arguments:
+      expression: "(is_current = true AND effective_to IS NULL) OR (is_current = false AND effective_to IS NOT NULL)"
+      msg: is_current must be true exactly when effective_to is empty
+      columns:
+        - is_current
+        - effective_to
+- name: effective_to is not after effective_from
+  criticality: error
+  user_metadata:
+    dimension: consistency
+  check:
+    function: sql_expression
+    arguments:
+      expression: "effective_to IS NULL OR effective_to > effective_from"
+      msg: effective_to must be later than effective_from
+      columns:
+        - effective_to
+        - effective_from

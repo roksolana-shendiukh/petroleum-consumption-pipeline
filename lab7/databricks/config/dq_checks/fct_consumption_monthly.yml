@@ -6,3 +6,23 @@
       column: weeks_count
       min_limit: "{{ weeks_per_month_min }}"
       max_limit: "{{ weeks_per_month_max }}"
+- name: total_consumption is negative
+  criticality: error
+  check:
+    function: is_not_less_than
+    arguments:
+      column: total_consumption
+      limit: 0
+- name: avg_weekly_consumption is outside min..max
+  criticality: error
+  user_metadata:
+    dimension: consistency
+  check:
+    function: sql_expression
+    arguments:
+      expression: "min_weekly_consumption <= avg_weekly_consumption AND avg_weekly_consumption <= max_weekly_consumption"
+      msg: avg_weekly_consumption must lie between min_weekly_consumption and max_weekly_consumption
+      columns:
+        - min_weekly_consumption
+        - avg_weekly_consumption
+        - max_weekly_consumption

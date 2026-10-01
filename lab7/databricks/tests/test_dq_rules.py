@@ -146,3 +146,17 @@ def test_real_check_files_are_valid_for_every_environment():
             assert checks
             assert len({check["name"] for check in checks}) == len(checks)
             assert all(dimension_of(check) for check in checks)
+
+
+def test_sql_expression_rules_declare_columns_and_dimension():
+    cfg = load_config(str(ROOT / "config" / "pipeline_config.yaml"), "dev")
+    suite = load_row_suite(
+        engine(), str(ROOT / "config" / "dq_checks"), build_table_names(cfg), cfg["dq"]
+    )
+
+    found = [c for _, checks in suite for c in checks if c["check"]["function"] == "sql_expression"]
+
+    assert found
+    for check in found:
+        assert check["check"]["arguments"].get("columns")
+        assert (check.get("user_metadata") or {}).get("dimension")

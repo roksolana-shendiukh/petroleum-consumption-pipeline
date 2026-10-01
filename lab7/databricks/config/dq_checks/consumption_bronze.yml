@@ -1,0 +1,36 @@
+- name: series is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: series
+- name: duoarea is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: duoarea
+- name: period is null
+  criticality: error
+  check:
+    function: is_not_null
+    arguments:
+      column: period
+- name: period is not a valid date
+  criticality: error
+  check:
+    function: is_valid_date
+    arguments:
+      column: period
+      date_format: yyyy-MM-dd
+- name: value is not a number
+  criticality: error
+  user_metadata:
+    dimension: validity
+  check:
+    function: sql_expression
+    arguments:
+      expression: "try_cast(`value` AS DECIMAL(10,3)) IS NOT NULL"
+      msg: value cannot be read as a number
+      columns:
+        - value

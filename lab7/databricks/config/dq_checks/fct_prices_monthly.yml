@@ -6,3 +6,29 @@
       column: weeks_count
       min_limit: "{{ weeks_per_month_min }}"
       max_limit: "{{ weeks_per_month_max }}"
+- name: avg_price is outside min_price..max_price
+  criticality: error
+  user_metadata:
+    dimension: consistency
+  check:
+    function: sql_expression
+    arguments:
+      expression: "min_price <= avg_price AND avg_price <= max_price"
+      msg: avg_price must lie between min_price and max_price
+      columns:
+        - min_price
+        - avg_price
+        - max_price
+- name: price_volatility differs from max_price - min_price
+  criticality: error
+  user_metadata:
+    dimension: consistency
+  check:
+    function: sql_expression
+    arguments:
+      expression: "ABS(price_volatility - (max_price - min_price)) <= 0.001"
+      msg: price_volatility must equal max_price - min_price
+      columns:
+        - price_volatility
+        - max_price
+        - min_price
