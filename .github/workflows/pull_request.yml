@@ -1,0 +1,48 @@
+name: pull-request-checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lab8/petroleum_pipeline/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  DATABRICKS_AUTH_TYPE: azure-client-secret
+
+defaults:
+  run:
+    working-directory: lab8/petroleum_pipeline
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+        with:
+          version: latest
+
+      - name: Validate the prod bundle
+        run: databricks bundle validate -t prod
+
+      - name: Show what would change in prod
+        run: databricks bundle plan -t prod
+
+      - name: Deploy to dev (needed to run the tests)
+        run: databricks bundle deploy -t dev
+
+      - name: Unit tests with coverage gate
+        run: databricks bundle run unit_tests -t dev
