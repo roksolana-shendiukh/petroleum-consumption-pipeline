@@ -49,19 +49,17 @@ targets:
                 - pypi:
                     package: pytest
                 - pypi:
+                    package: pytest-cov
+                - pypi:
                     package: tenacity
                 - pypi:
                     package: httpx
               spark_python_task:
                 python_file: tests/run_tests.py
                 parameters:
-                  - ${workspace.file_path}        
+                  - ${workspace.file_path}
+                  - "0"
         petroleum_etl_job:
           tasks:
             - task_key: ingest
               existing_cluster_id: ${var.cluster_id}
-              libraries:
-                - pypi:
-                    package: httpx
-                - pypi:
-                    package: tenacity
