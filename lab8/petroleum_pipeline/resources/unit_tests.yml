@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    unit_tests:
+      name: petroleum-unit-tests
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - pytest
+              - pyyaml
+              - httpx
+              - tenacity
+      tasks:
+        - task_key: pytest
+          environment_key: default
+          spark_python_task:
+            python_file: ../tests/run_tests.py
+            parameters:
+              - ${workspace.file_path}
