@@ -1,100 +1,130 @@
+import httpx
 import pytest
-import requests
+from tenacity import wait_none
 
-from petroleum_transformations.eia_client import fetch_all, fetch_page
+from petroleum_transformations.eia_client import fetch_all, fetch_page, run_sync
 
-URL = "https://api.eia.gov/v2/test/"
-
-
-class FakeResponse:
-    def __init__(self, body=None, error=None):
-        self._body = body
-        self._error = error
-
-    def raise_for_status(self):
-        if self._error:
-            raise self._error
-
-    def json(self):
-        return self._body
+URL = "https://example.test/data/"
 
 
 @pytest.fixture(autouse=True)
-def no_sleep(monkeypatch):
-    """Skip tenacity backoff waits so retry tests run instantly."""
-    monkeypatch.setattr("time.sleep", lambda s: None)
+def no_retry_wait(monkeypatch):
+    monkeypatch.setattr(fetch_page.retry, "wait", wait_none())
 
 
-def paginated_api(rows, calls):
-    def fake_get(url, params, timeout):
-        calls.append(params)
-        off, length = params["offset"], params["length"]
-        return FakeResponse({"response": {"total": str(len(rows)), "data": rows[off:off + length]}})
-    return fake_get
+def run(handler, action):
+    async def runner():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await action(client)
+
+    return run_sync(runner())
 
 
-def test_fetch_page_builds_params_and_merges_extra(monkeypatch):
+def test_fetch_page_builds_params_and_merges_extra():
+    captured = []
+
+    def handler(request):
+        captured.append(request.url.params)
+        return httpx.Response(200, json={"response": {"total": "1", "data": [{"v": 1}]}})
+
+    body = run(
+        handler,
+        lambda client: fetch_page(
+            client, URL, 10, "2026-01-01", "2026-01-31", "KEY", length=50,
+            extra_params={"facets[product][]": ["A", "B"]},
+        ),
+    )
+
+    params = captured[0]
+    assert params["offset"] == "10"
+    assert params["length"] == "50"
+    assert params["api_key"] == "KEY"
+    assert params["start"] == "2026-01-01"
+    assert params.get_list("facets[product][]") == ["A", "B"]
+    assert body == {"total": "1", "data": [{"v": 1}]}
+
+
+def test_fetch_all_paginates_until_total_and_keeps_page_order():
+    offsets = []
+
+    def handler(request):
+        offset = int(request.url.params["offset"])
+        offsets.append(offset)
+        rows = [{"offset": offset} for _ in range(min(5, 12 - offset))]
+        return httpx.Response(200, json={"response": {"total": "12", "data": rows}})
+
+    rows = run(handler, lambda client: fetch_all(client, URL, "s", "e", "KEY", page_size=5))
+
+    assert sorted(offsets) == [0, 5, 10]
+    assert [row["offset"] for row in rows] == [0] * 5 + [5] * 5 + [10] * 2
+
+
+def test_fetch_all_empty_result_makes_single_request():
     calls = []
-    monkeypatch.setattr(requests, "get", paginated_api([{"a": 1}], calls))
 
-    fetch_page(URL, offset=0, start="2026-01-01", end="2026-02-01", api_key="KEY",
-               extra_params={"facets[product][]": ["A", "B"]})
+    def handler(request):
+        calls.append(1)
+        return httpx.Response(200, json={"response": {"total": "0", "data": []}})
 
-    p = calls[0]
-    assert p["api_key"] == "KEY"
-    assert p["start"] == "2026-01-01" and p["end"] == "2026-02-01"
-    assert p["frequency"] == "weekly"
-    assert p["facets[product][]"] == ["A", "B"]
+    rows = run(handler, lambda client: fetch_all(client, URL, "s", "e", "KEY"))
 
-
-def test_fetch_all_paginates_until_total(monkeypatch):
-    rows = [{"i": i} for i in range(7)]
-    calls = []
-    monkeypatch.setattr(requests, "get", paginated_api(rows, calls))
-
-    result = fetch_all(URL, "2026-01-01", "2026-02-01", api_key="KEY", page_size=3)
-
-    assert result == rows
-    assert [c["offset"] for c in calls] == [0, 3, 6]
-
-
-def test_fetch_all_empty_result_makes_single_request(monkeypatch):
-    calls = []
-    monkeypatch.setattr(requests, "get", paginated_api([], calls))
-
-    assert fetch_all(URL, "2026-01-01", "2026-02-01", api_key="KEY") == []
+    assert rows == []
     assert len(calls) == 1
 
 
-def test_fetch_page_retries_then_succeeds(monkeypatch):
-    responses = [
-        FakeResponse(error=requests.HTTPError("500")),
-        FakeResponse({"response": {"total": "0", "data": []}}),
-    ]
-    calls = []
+def test_fetch_page_retries_server_errors_then_succeeds():
+    attempts = []
 
-    def fake_get(url, params, timeout):
-        calls.append(1)
-        return responses.pop(0)
+    def handler(request):
+        attempts.append(1)
+        if len(attempts) < 3:
+            return httpx.Response(500)
+        return httpx.Response(200, json={"response": {"total": "0", "data": []}})
 
-    monkeypatch.setattr(requests, "get", fake_get)
+    body = run(handler, lambda client: fetch_page(client, URL, 0, "s", "e", "KEY"))
 
-    fetch_page(URL, 0, "2026-01-01", "2026-02-01", api_key="KEY")
-
-    assert len(calls) == 2
+    assert len(attempts) == 3
+    assert body["total"] == "0"
 
 
-def test_fetch_page_gives_up_after_three_attempts(monkeypatch):
-    calls = []
+def test_fetch_page_gives_up_after_three_attempts():
+    attempts = []
 
-    def fake_get(url, params, timeout):
-        calls.append(1)
-        return FakeResponse(error=requests.HTTPError("500"))
+    def handler(request):
+        attempts.append(1)
+        return httpx.Response(503)
 
-    monkeypatch.setattr(requests, "get", fake_get)
+    with pytest.raises(httpx.HTTPStatusError):
+        run(handler, lambda client: fetch_page(client, URL, 0, "s", "e", "KEY"))
 
-    with pytest.raises(requests.HTTPError):
-        fetch_page(URL, 0, "2026-01-01", "2026-02-01", api_key="KEY")
+    assert len(attempts) == 3
 
-    assert len(calls) == 3
-    
+
+def test_fetch_page_does_not_retry_client_errors():
+    attempts = []
+
+    def handler(request):
+        attempts.append(1)
+        return httpx.Response(401)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        run(handler, lambda client: fetch_page(client, URL, 0, "s", "e", "KEY"))
+
+    assert len(attempts) == 1
+
+
+def test_run_sync_returns_the_coroutine_result():
+    async def value():
+        return 42
+
+    assert run_sync(value()) == 42
+
+
+def test_run_sync_works_when_called_from_inside_a_coroutine():
+    async def value():
+        return 42
+
+    async def outer():
+        return run_sync(value())
+
+    assert run_sync(outer()) == 42

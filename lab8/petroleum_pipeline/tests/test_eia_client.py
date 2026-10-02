@@ -1,5 +1,3 @@
-import asyncio
-
 import httpx
 import pytest
 from tenacity import wait_none
@@ -19,7 +17,7 @@ def run(handler, action):
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             return await action(client)
 
-    return asyncio.run(runner())
+    return run_sync(runner())
 
 
 def test_fetch_page_builds_params_and_merges_extra():
@@ -122,11 +120,11 @@ def test_run_sync_returns_the_coroutine_result():
     assert run_sync(value()) == 42
 
 
-def test_run_sync_works_inside_a_running_event_loop():
+def test_run_sync_works_when_called_from_inside_a_coroutine():
     async def value():
         return 42
 
     async def outer():
         return run_sync(value())
 
-    assert asyncio.run(outer()) == 42
+    assert run_sync(outer()) == 42
