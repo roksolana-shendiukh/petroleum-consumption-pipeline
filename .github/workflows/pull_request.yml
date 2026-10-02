@@ -33,7 +33,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - uses: databricks/setup-cli@main
         with:
-          version: latest
+          version: 1.19.0
 
       - name: Validate the prod bundle
         run: databricks bundle validate -t prod
