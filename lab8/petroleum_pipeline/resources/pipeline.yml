@@ -8,6 +8,7 @@ resources:
       root_path: "../src/lakeflow_pipeline"
 
       configuration:
+        petroleum.src_path: ${workspace.file_path}/src
         petroleum.catalog: ${var.catalog}
         petroleum.bronze_schema: ${var.bronze_schema}
         petroleum.silver_schema: ${var.silver_schema}
@@ -23,6 +24,3 @@ resources:
         - glob:
             include: ../src/lakeflow_pipeline/transformations/**
 
-      environment:
-        dependencies:
-          - --editable ${workspace.file_path}

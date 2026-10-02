@@ -1,6 +1,9 @@
+import sys
+
+sys.path.insert(0, spark.conf.get("petroleum.src_path"))
+
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
-
 from petroleum_transformations.quality import failed_rules
 
 CATALOG = spark.conf.get("petroleum.catalog")
