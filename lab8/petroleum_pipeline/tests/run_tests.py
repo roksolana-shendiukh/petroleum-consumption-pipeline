@@ -1,3 +1,5 @@
+import argparse
+import logging
 import os
 import sys
 
@@ -5,20 +7,28 @@ sys.dont_write_bytecode = True
 
 import pytest
 
-root = sys.argv[1]
-threshold = sys.argv[2] if len(sys.argv) > 2 else "0"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("run_tests")
+logger.info("arguments received: %s", sys.argv)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("root")
+parser.add_argument("--threshold", type=float, default=0.0)
+args, ignored = parser.parse_known_args(sys.argv[1:])
+if ignored:
+    logger.info("ignored arguments: %s", ignored)
 
 os.environ["COVERAGE_FILE"] = "/tmp/.coverage"
-sys.path.insert(0, f"{root}/src")
+sys.path.insert(0, f"{args.root}/src")
 
 code = pytest.main([
-    f"{root}/tests",
+    f"{args.root}/tests",
     "-v",
     "-p", "no:cacheprovider",
     "--import-mode=importlib",
-    f"--cov={root}/src/petroleum_transformations",
+    f"--cov={args.root}/src/petroleum_transformations",
     "--cov-report=term-missing",
-    f"--cov-fail-under={threshold}",
+    f"--cov-fail-under={args.threshold}",
 ])
 if code != 0:
     raise RuntimeError(f"pytest failed with exit code {code}")
