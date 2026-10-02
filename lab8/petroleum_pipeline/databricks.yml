@@ -63,3 +63,37 @@ targets:
           tasks:
             - task_key: ingest
               existing_cluster_id: ${var.cluster_id}
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405619332572019.19.azuredatabricks.net
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: roksolana.shendiu770@softserve.academy
+        level: CAN_MANAGE
+    variables:
+      catalog: dbr_dev_ua_5816_trail
+      bronze_schema: bronze
+      silver_schema: silver
+      gold_schema: gold
+      raw_volume_path: /Volumes/dbr_dev_ua_5816_trail/bronze/raw_files
+    resources:
+      schemas:
+        bronze:
+          name: bronze
+          catalog_name: ${var.catalog}
+        silver:
+          name: silver
+          catalog_name: ${var.catalog}
+        gold:
+          name: gold
+          catalog_name: ${var.catalog}
+      volumes:
+        raw_files:
+          name: raw_files
+          catalog_name: ${var.catalog}
+          schema_name: ${resources.schemas.bronze.name}
+      pipelines:
+        petroleum_etl:
+          schema: ${resources.schemas.bronze.name}
