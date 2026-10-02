@@ -38,7 +38,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - uses: databricks/setup-cli@main
         with:
-          version: latest
+          version: 1.19.0
 
       - name: Tie the wheel version to the commit
         run: sed -i "s/^version = .*/version = \"0.0.1+${GITHUB_SHA::7}\"/" pyproject.toml
