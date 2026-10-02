@@ -8,8 +8,8 @@ sys.dont_write_bytecode = True
 import pytest
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger("run_tests")
-logger.info("arguments received: %s", sys.argv)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("root")
