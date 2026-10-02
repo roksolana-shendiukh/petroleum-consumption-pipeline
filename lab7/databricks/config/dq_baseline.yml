@@ -1,0 +1,31 @@
+dev:
+  - table: petroleum_prices_raw
+    test: value is not a positive number
+    allowed: 2
+  - table: dim_date
+    test: full_date covers latest petroleum_prices.effective_from
+    allowed: 14
+  - table: fct_snapshot_consumption_monthly
+    test: weeks_count out of range
+    allowed: 15
+  - table: fct_snapshot_consumption_monthly
+    test: dim_product_key has no match in dim_product.product_key
+    allowed: 1484
+  - table: fct_snapshot_consumption_weekly
+    test: dim_product_key has no match in dim_product.product_key
+    allowed: 6446
+  - table: fct_snapshot_consumption_weekly
+    test: row count differs silver -> gold weekly (petroleum_consumption)
+    allowed: 5525
+  - table: fct_snapshot_consumption_weekly
+    test: sum of consumption_value differs silver -> gold weekly
+    allowed: 36042969
+  - table: fct_snapshot_prices_monthly
+    test: weeks_count out of range
+    allowed: 428
+  - table: petroleum_consumption
+    test: product_bk has no match in dim_product.consumption_product_code
+    allowed: 921
+  - table: petroleum_prices
+    test: effective_from has no match in dim_date.full_date
+    allowed: 88

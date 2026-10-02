@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %pip install databricks-labs-dqx==0.16.0
 
 # COMMAND ----------

@@ -37,7 +37,7 @@ resources:
       max_concurrent_runs: 1
       tasks:
         - task_key: deploy_checks
-          existing_cluster_id: ${var.cluster_id}
+          existing_cluster_id: 0924-102324-wnx9xwo2
           notebook_task:
             notebook_path: notebooks/00_dq_deploy_checks.py
             base_parameters:
@@ -48,7 +48,7 @@ resources:
         - task_key: row_checks
           depends_on:
             - task_key: deploy_checks
-          existing_cluster_id: ${var.cluster_id}
+          existing_cluster_id: 0924-102324-wnx9xwo2
           notebook_task:
             notebook_path: notebooks/01_dq_row_checks.py
             base_parameters:
@@ -61,7 +61,7 @@ resources:
           depends_on:
             - task_key: row_checks
           run_if: ALL_DONE
-          existing_cluster_id: ${var.cluster_id}
+          existing_cluster_id: 0924-102324-wnx9xwo2
           notebook_task:
             notebook_path: notebooks/02_dq_table_checks.py
             base_parameters:
