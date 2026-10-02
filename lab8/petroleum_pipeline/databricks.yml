@@ -55,8 +55,13 @@ targets:
               spark_python_task:
                 python_file: tests/run_tests.py
                 parameters:
-                  - ${workspace.file_path}
+                  - ${workspace.file_path}        
         petroleum_etl_job:
           tasks:
             - task_key: ingest
               existing_cluster_id: ${var.cluster_id}
+              libraries:
+                - pypi:
+                    package: httpx
+                - pypi:
+                    package: tenacity
