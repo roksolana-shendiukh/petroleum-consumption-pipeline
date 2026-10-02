@@ -37,7 +37,7 @@ targets:
       silver_schema: roksolana_shendiu770_silver_lf
       gold_schema: roksolana_shendiu770_gold_lf
       raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/lf
-      cluster_id: <ID вибраного кластера>
+      cluster_id: 0924-102324-wnx9xwo2
     resources:
       jobs:
         unit_tests:
