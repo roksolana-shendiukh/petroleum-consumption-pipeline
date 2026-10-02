@@ -14,7 +14,7 @@ dbutils.library.restartPython()
 import logging
 import os
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import httpx
 
@@ -44,6 +44,7 @@ if not volume:
 today = date.today()
 start = dbutils.widgets.get("start_date") or (today - timedelta(days=30)).isoformat()
 end = dbutils.widgets.get("end_date") or today.isoformat()
+stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
 api_key = dbutils.secrets.get(
     scope=dbutils.widgets.get("secret_scope"), key=dbutils.widgets.get("secret_key")
 )
@@ -67,7 +68,7 @@ def save(records, subfolder, prefix):
     if not records:
         logger.warning(f"No records for {prefix}, nothing saved")
         return None
-    path = f"{volume}/{subfolder}/{file_name(prefix, start, end)}"
+    path = f"{volume}/{subfolder}/{file_name(prefix, start, end, stamp)}"
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         f.write(to_jsonl(records))
