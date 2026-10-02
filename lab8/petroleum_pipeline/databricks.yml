@@ -6,6 +6,8 @@ include:
   - resources/*/*.yml
 
 variables:
+  cluster_id:
+    description: Existing cluster that runs the unit tests in dev
   catalog:
     description: Unity Catalog catalog for all layers
   bronze_schema:
@@ -35,3 +37,22 @@ targets:
       silver_schema: roksolana_shendiu770_silver_lf
       gold_schema: roksolana_shendiu770_gold_lf
       raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/lf
+      cluster_id: <ID вибраного кластера>
+    resources:
+      jobs:
+        unit_tests:
+          name: petroleum-unit-tests
+          tasks:
+            - task_key: pytest
+              existing_cluster_id: ${var.cluster_id}
+              libraries:
+                - pypi:
+                    package: pytest
+                - pypi:
+                    package: tenacity
+                - pypi:
+                    package: httpx
+              spark_python_task:
+                python_file: tests/run_tests.py
+                parameters:
+                  - ${workspace.file_path}

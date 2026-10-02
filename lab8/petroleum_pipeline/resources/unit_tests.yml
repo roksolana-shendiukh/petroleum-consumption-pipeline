@@ -13,8 +13,17 @@ resources:
               - tenacity
       tasks:
         - task_key: pytest
-          environment_key: default
           spark_python_task:
             python_file: ../tests/run_tests.py
             parameters:
               - ${workspace.file_path}
+          existing_cluster_id: 0924-102324-wnx9xwo2
+          libraries:
+            - pypi:
+                package: pytest
+            - pypi:
+                package: pyyaml
+            - pypi:
+                package: httpx
+            - pypi:
+                package: tenacity
