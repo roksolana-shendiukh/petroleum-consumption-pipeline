@@ -6,9 +6,11 @@ resources:
       schema: ${var.bronze_schema}
       serverless: true
       root_path: "../src/lakeflow_pipeline"
+      environment:
+        dependencies:
+          - ../dist/*.whl
 
       configuration:
-        petroleum.src_path: ${workspace.file_path}/src
         petroleum.catalog: ${var.catalog}
         petroleum.bronze_schema: ${var.bronze_schema}
         petroleum.silver_schema: ${var.silver_schema}

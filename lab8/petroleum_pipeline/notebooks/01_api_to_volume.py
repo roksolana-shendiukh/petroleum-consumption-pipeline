@@ -3,17 +3,8 @@
 # [tool.databricks.environment]
 # environment_version = "6"
 # ///
-# MAGIC %pip install httpx tenacity
-
-# COMMAND ----------
-
-dbutils.library.restartPython()
-
-# COMMAND ----------
-
 import logging
 import os
-import sys
 from datetime import date, datetime, timedelta
 
 import httpx
@@ -24,11 +15,6 @@ dbutils.widgets.text("end_date", "")
 dbutils.widgets.text("secret_scope", "eia_api")
 dbutils.widgets.text("secret_key", "eia-api-key")
 
-notebook_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-project_root = "/Workspace" + notebook_path.rsplit("/notebooks/", 1)[0]
-
-sys.dont_write_bytecode = True
-sys.path.insert(0, f"{project_root}/src")
 
 from petroleum_transformations.eia_client import run_sync
 from petroleum_transformations.ingestion import collect, file_name, to_jsonl

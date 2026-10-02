@@ -7,7 +7,7 @@ include:
 
 variables:
   cluster_id:
-    description: Existing cluster used in dev only (unit tests and ingestion)
+    description: Existing cluster used in dev only (unit tests)
     default: ""
   catalog:
     description: Unity Catalog catalog for all layers
@@ -25,6 +25,16 @@ variables:
   min_weeks_per_month:
     description: Months with fewer weeks are left out of monthly facts
     default: "4"
+
+artifacts:
+  petroleum_transformations:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+sync:
+  include:
+    - dist/*.whl
 
 targets:
   dev:
@@ -60,10 +70,6 @@ targets:
                 parameters:
                   - ${workspace.file_path}
                   - "--threshold=95"
-        petroleum_etl_job:
-          tasks:
-            - task_key: ingest
-              existing_cluster_id: ${var.cluster_id}
 
   prod:
     mode: production

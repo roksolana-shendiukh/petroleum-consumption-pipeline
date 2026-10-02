@@ -11,8 +11,15 @@ resources:
           default: ${var.raw_volume_path}
         - name: start_date
           default: ""
+      environments:
+        - environment_key: ingest_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
       tasks:
         - task_key: ingest
+          environment_key: ingest_env
           max_retries: 1
           timeout_seconds: 3600
           notebook_task:
