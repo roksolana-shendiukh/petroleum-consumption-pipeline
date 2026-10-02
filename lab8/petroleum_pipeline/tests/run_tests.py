@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import tempfile
 
 sys.dont_write_bytecode = True
 
@@ -18,7 +19,7 @@ args, ignored = parser.parse_known_args(sys.argv[1:])
 if ignored:
     logger.info("ignored arguments: %s", ignored)
 
-os.environ["COVERAGE_FILE"] = "/tmp/.coverage"
+os.environ["COVERAGE_FILE"] = os.path.join(tempfile.mkdtemp(prefix="coverage_"), ".coverage")
 sys.path.insert(0, f"{args.root}/src")
 
 code = pytest.main([

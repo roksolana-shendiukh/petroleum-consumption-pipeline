@@ -58,7 +58,7 @@ targets:
                 python_file: tests/run_tests.py
                 parameters:
                   - ${workspace.file_path}
-                  - "--threshold=0"
+                  - "--threshold=95"
         petroleum_etl_job:
           tasks:
             - task_key: ingest
