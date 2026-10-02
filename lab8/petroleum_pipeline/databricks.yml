@@ -7,7 +7,7 @@ include:
 
 variables:
   cluster_id:
-    description: Existing cluster that runs the unit tests in dev
+    description: Existing cluster that runs the unit tests and the ingestion in dev
   catalog:
     description: Unity Catalog catalog for all layers
   bronze_schema:
@@ -56,3 +56,7 @@ targets:
                 python_file: tests/run_tests.py
                 parameters:
                   - ${workspace.file_path}
+        petroleum_etl_job:
+          tasks:
+            - task_key: ingest
+              existing_cluster_id: ${var.cluster_id}

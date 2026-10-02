@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    petroleum_etl_job:
+      name: petroleum-etl
+      max_concurrent_runs: 1
+      parameters:
+        - name: start_date
+          default: ""
+      tasks:
+        - task_key: ingest
+          notebook_task:
+            notebook_path: ../notebooks/01_api_to_volume.py
+            base_parameters:
+              volume_path: ${var.raw_volume_path}
+              start_date: "{{job.parameters.start_date}}"
+        - task_key: pipeline
+          depends_on:
+            - task_key: ingest
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.petroleum_etl.id}
