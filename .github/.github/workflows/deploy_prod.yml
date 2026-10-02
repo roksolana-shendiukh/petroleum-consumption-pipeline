@@ -1,0 +1,60 @@
+name: deploy-prod
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lab8/petroleum_pipeline/**"
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Backfill start date (YYYY-MM-DD). Leave empty for the usual last-30-days run."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  DATABRICKS_AUTH_TYPE: azure-client-secret
+
+defaults:
+  run:
+    working-directory: lab8/petroleum_pipeline
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+        with:
+          version: latest
+
+      - name: Tie the wheel version to the commit
+        run: sed -i "s/^version = .*/version = \"0.0.1+${GITHUB_SHA::7}\"/" pyproject.toml
+
+      - name: Validate
+        run: databricks bundle validate -t prod
+
+      - name: Deploy
+        run: databricks bundle deploy -t prod
+
+      - name: Run the ETL job
+        env:
+          START_DATE: ${{ inputs.start_date }}
+        run: |
+          if [ -n "${START_DATE}" ]; then
+            databricks bundle run petroleum_etl_job -t prod --params start_date="${START_DATE}"
+          else
+            databricks bundle run petroleum_etl_job -t prod
+          fi
