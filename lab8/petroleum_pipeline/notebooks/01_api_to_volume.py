@@ -74,7 +74,3 @@ def save(records, subfolder, prefix):
         f.write(to_jsonl(records))
     logger.info(f"Saved {len(records)} records to {path}")
     return path
-
-
-print(save(consumption, "consumption", "petroleum_raw"))
-print(save(prices, "prices", "petroleum_prices_raw"))
