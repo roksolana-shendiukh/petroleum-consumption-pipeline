@@ -7,7 +7,8 @@ include:
 
 variables:
   cluster_id:
-    description: Existing cluster that runs the unit tests and the ingestion in dev
+    description: Existing cluster used in dev only (unit tests and ingestion)
+    default: ""
   catalog:
     description: Unity Catalog catalog for all layers
   bronze_schema:
@@ -68,7 +69,8 @@ targets:
     mode: production
     workspace:
       host: https://adb-7405619332572019.19.azuredatabricks.net
-      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
     permissions:
       - user_name: roksolana.shendiu770@softserve.academy
         level: CAN_MANAGE

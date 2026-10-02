@@ -3,6 +3,14 @@
 # [tool.databricks.environment]
 # environment_version = "6"
 # ///
+# MAGIC %pip install httpx tenacity
+
+# COMMAND ----------
+
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
 import logging
 import os
 import sys

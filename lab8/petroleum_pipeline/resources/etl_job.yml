@@ -3,18 +3,23 @@ resources:
     petroleum_etl_job:
       name: petroleum-etl
       max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
       parameters:
+        - name: volume_path
+          default: ${var.raw_volume_path}
         - name: start_date
           default: ""
       tasks:
         - task_key: ingest
+          max_retries: 1
+          timeout_seconds: 3600
           notebook_task:
             notebook_path: ../notebooks/01_api_to_volume.py
-            base_parameters:
-              volume_path: ${var.raw_volume_path}
-              start_date: "{{job.parameters.start_date}}"
         - task_key: pipeline
           depends_on:
             - task_key: ingest
+          timeout_seconds: 7200
           pipeline_task:
             pipeline_id: ${resources.pipelines.petroleum_etl.id}
