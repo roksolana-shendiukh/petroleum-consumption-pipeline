@@ -128,3 +128,13 @@ def test_run_sync_works_when_called_from_inside_a_coroutine():
         return run_sync(value())
 
     assert run_sync(outer()) == 42
+
+
+def test_errors_do_not_leak_the_api_key():
+    def handler(request):
+        return httpx.Response(401)
+
+    with pytest.raises(httpx.HTTPStatusError) as caught:
+        run(handler, lambda client: fetch_page(client, URL, 0, "s", "e", "SECRET-KEY"))
+
+    assert "SECRET-KEY" not in str(caught.value)

@@ -1,0 +1,28 @@
+resources:
+  pipelines:
+    petroleum_etl:
+      name: petroleum_etl
+      catalog: ${var.catalog}
+      schema: ${var.bronze_schema}
+      serverless: true
+      root_path: "../src/lakeflow_pipeline"
+
+      configuration:
+        petroleum.catalog: ${var.catalog}
+        petroleum.bronze_schema: ${var.bronze_schema}
+        petroleum.silver_schema: ${var.silver_schema}
+        petroleum.gold_schema: ${var.gold_schema}
+        petroleum.calendar_start: ${var.calendar_start}
+        petroleum.min_weeks_per_month: ${var.min_weeks_per_month}
+        petroleum.consumption_path: "${var.raw_volume_path}/consumption"
+        petroleum.consumption_schema_location: "${var.raw_volume_path}/_schemas/consumption"
+        petroleum.prices_path: "${var.raw_volume_path}/prices"
+        petroleum.prices_schema_location: "${var.raw_volume_path}/_schemas/prices"
+
+      libraries:
+        - glob:
+            include: ../src/lakeflow_pipeline/transformations/**
+
+      environment:
+        dependencies:
+          - --editable ${workspace.file_path}

@@ -20,9 +20,17 @@ def fetch_page(url, offset, start, end, api_key, length=5000, extra_params=None)
     }
     if extra_params:
         params.update(extra_params)
-    response = requests.get(url, params=params, timeout=30)
-    response.raise_for_status()
-    return response
+        
+    response = await client.get(url, params=params, timeout=REQUEST_TIMEOUT)
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as error:
+        raise httpx.HTTPStatusError(
+            f"EIA request failed with status {response.status_code} (offset {offset})",
+            request=error.request,
+            response=error.response,
+        ) from None
+    return response.json()["response"]
 
 
 def fetch_all(url, start, end, api_key, extra_params=None, page_size=5000):
