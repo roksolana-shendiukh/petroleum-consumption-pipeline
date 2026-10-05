@@ -7,7 +7,8 @@ include:
 
 variables:
   cluster_id:
-    description: Existing cluster that runs the unit tests and the ingestion in dev
+    description: Existing cluster used in dev only (unit tests)
+    default: ""
   catalog:
     description: Unity Catalog catalog for all layers
   bronze_schema:
@@ -24,6 +25,16 @@ variables:
   min_weeks_per_month:
     description: Months with fewer weeks are left out of monthly facts
     default: "4"
+
+artifacts:
+  petroleum_transformations:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+sync:
+  include:
+    - dist/*.whl
 
 targets:
   dev:
@@ -42,24 +53,56 @@ targets:
       jobs:
         unit_tests:
           name: petroleum-unit-tests
+          environments:
+            - environment_key: tests
+              spec:
+                environment_version: "3"
+                dependencies:
+                  - pytest
+                  - pytest-cov
+                  - tenacity
+                  - httpx
+                  - pyyaml
           tasks:
             - task_key: pytest
-              existing_cluster_id: ${var.cluster_id}
-              libraries:
-                - pypi:
-                    package: pytest
-                - pypi:
-                    package: pytest-cov
-                - pypi:
-                    package: tenacity
-                - pypi:
-                    package: httpx
+              environment_key: tests
               spark_python_task:
                 python_file: tests/run_tests.py
                 parameters:
                   - ${workspace.file_path}
                   - "--threshold=95"
-        petroleum_etl_job:
-          tasks:
-            - task_key: ingest
-              existing_cluster_id: ${var.cluster_id}
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405619332572019.19.azuredatabricks.net
+    run_as:
+      service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
+    permissions:
+      - user_name: roksolana.shendiu770@softserve.academy
+        level: CAN_MANAGE
+    variables:
+      catalog: dbr_dev_ua_5816_trail
+      bronze_schema: bronze
+      silver_schema: silver
+      gold_schema: gold
+      raw_volume_path: /Volumes/dbr_dev_ua_5816_trail/bronze/raw_files
+    resources:
+      schemas:
+        bronze:
+          name: bronze
+          catalog_name: ${var.catalog}
+        silver:
+          name: silver
+          catalog_name: ${var.catalog}
+        gold:
+          name: gold
+          catalog_name: ${var.catalog}
+      volumes:
+        raw_files:
+          name: raw_files
+          catalog_name: ${var.catalog}
+          schema_name: ${resources.schemas.bronze.name}
+      pipelines:
+        petroleum_etl:
+          schema: ${resources.schemas.bronze.name}

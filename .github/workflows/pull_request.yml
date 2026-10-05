@@ -1,0 +1,56 @@
+name: pull-request-checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lab8/petroleum_pipeline/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+  DATABRICKS_AUTH_TYPE: oauth-m2m
+
+defaults:
+  run:
+    working-directory: lab8/petroleum_pipeline
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+        with:
+          version: 1.19.0
+
+      - name: Validate the prod bundle
+        run: databricks bundle validate -t prod
+
+      - name: Show what would change in prod
+        run: databricks bundle plan -t prod
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install test dependencies
+        run: |
+          uv venv
+          uv pip install pytest pytest-cov "pyspark>=4.0,<4.1" httpx tenacity pyyaml
+
+      - name: Unit tests with coverage gate
+        env:
+          USE_LOCAL_SPARK: "1"
+        run: .venv/bin/python tests/run_tests.py "$PWD" --threshold=95
