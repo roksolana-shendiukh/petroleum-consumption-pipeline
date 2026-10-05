@@ -16,6 +16,10 @@ variables:
     description: Schema for dimensions and facts
   raw_volume_path:
     description: Volume folder with the raw API files
+  warehouse_id:
+    description: SQL warehouse that runs the dashboard queries
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
   calendar_start:
     description: First day of the calendar dimension
     default: "2009-01-01"
