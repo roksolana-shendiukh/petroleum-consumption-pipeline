@@ -40,8 +40,17 @@ jobs:
       - name: Show what would change in prod
         run: databricks bundle plan -t prod
 
-      - name: Deploy to dev (needed to run the tests)
-        run: databricks bundle deploy -t dev
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install test dependencies
+        run: |
+          uv venv
+          uv pip install pytest pytest-cov "pyspark>=4.0,<4.1" httpx tenacity pyyaml
 
       - name: Unit tests with coverage gate
-        run: databricks bundle run unit_tests -t dev
+        env:
+          USE_LOCAL_SPARK: "1"
+        run: .venv/bin/python tests/run_tests.py "$PWD" --threshold=95
