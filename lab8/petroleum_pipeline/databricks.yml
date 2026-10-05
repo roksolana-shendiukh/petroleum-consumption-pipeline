@@ -105,3 +105,9 @@ targets:
       pipelines:
         petroleum_etl:
           schema: ${resources.schemas.bronze.name}
+      jobs:
+        petroleum_etl_job:
+          schedule:
+            quartz_cron_expression: "0 0 12 ? * TUE"
+            timezone_id: America/New_York
+            pause_status: UNPAUSED
