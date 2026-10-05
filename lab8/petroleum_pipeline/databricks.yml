@@ -20,6 +20,8 @@ variables:
     description: SQL warehouse that runs the dashboard queries
     lookup:
       warehouse: "Serverless Starter Warehouse"
+  dashboard_folder:
+    description: Workspace folder where the dashboard is created
   calendar_start:
     description: First day of the calendar dimension
     default: "2009-01-01"
@@ -49,6 +51,7 @@ targets:
       silver_schema: roksolana_shendiu770_silver_lf
       gold_schema: roksolana_shendiu770_gold_lf
       raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/lf
+      dashboard_folder: /Workspace/Users/roksolana.shendiu770@softserve.academy
     resources:
       jobs:
         unit_tests:
@@ -90,6 +93,7 @@ targets:
       silver_schema: silver
       gold_schema: gold
       raw_volume_path: /Volumes/dbr_dev_ua_5816_trail/bronze/raw_files
+      dashboard_folder: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727
     resources:
       schemas:
         bronze:
