@@ -45,6 +45,7 @@ targets:
     default: true
     workspace:
       host: https://adb-7405604651938730.10.azuredatabricks.net
+      root_path: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/petroleum_pipeline/dev
     variables:
       catalog: dbr_dev_ua5816bd
       bronze_schema: roksolana_shendiu770_bronze_lf
@@ -79,7 +80,7 @@ targets:
     mode: production
     workspace:
       host: https://adb-7405619332572019.19.azuredatabricks.net
-      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/petroleum_pipeline/prod
     run_as:
       service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
     permissions:
