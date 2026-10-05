@@ -1,0 +1,8 @@
+resources:
+  dashboards:
+    petroleum_dashboard:
+      display_name: "Petroleum Consumption and Prices"
+      file_path: ../src/dashboards/petroleum.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.gold_schema}
