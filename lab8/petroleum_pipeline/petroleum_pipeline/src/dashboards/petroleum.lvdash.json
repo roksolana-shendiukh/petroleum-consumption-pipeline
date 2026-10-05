@@ -1,0 +1,113 @@
+{
+  "datasets": [
+    {
+      "name": "b9ae423f",
+      "displayName": "consumption_monthly",
+      "queryLines": [
+        "SELECT d.full_date AS month_start,\n",
+        "       p.product_name,\n",
+        "       p.unit_code,\n",
+        "       SUM(f.total_consumption) AS total_consumption\n",
+        "FROM fct_snapshot_consumption_monthly f\n",
+        "JOIN dim_date d ON f.dim_date_key = d.date_key\n",
+        "JOIN dim_product p ON f.dim_product_key = p.product_key\n",
+        "GROUP BY d.full_date, p.product_name, p.unit_code"
+      ]
+    },
+    {
+      "name": "f0b18206",
+      "displayName": "prices_monthly",
+      "queryLines": [
+        "SELECT d.full_date AS month_start,\n",
+        "       p.product_name,\n",
+        "       AVG(f.avg_price) AS avg_price\n",
+        "FROM fct_snapshot_prices_monthly f\n",
+        "JOIN dim_date d ON f.dim_date_key = d.date_key\n",
+        "JOIN dim_product p ON f.dim_product_key = p.product_key\n",
+        "GROUP BY d.full_date, p.product_name"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "46c02ebd",
+      "displayName": "Overview",
+      "layout": [
+        {
+          "widget": {
+            "name": "monthly-consumption-by-product",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "b9ae423f",
+                  "fields": [
+                    { "name": "product_name", "expression": "`product_name`" },
+                    { "name": "monthly(month_start)", "expression": "DATE_TRUNC(\"MONTH\", `month_start`)" },
+                    { "name": "sum(total_consumption)", "expression": "SUM(`total_consumption`)" }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": { "value": "Monthly consumption by product", "fields": [] }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": { "fieldName": "monthly(month_start)", "axis": { "hideTitle": true }, "scale": { "type": "temporal" } },
+                "y": { "fieldName": "sum(total_consumption)", "axis": { "hideTitle": true }, "scale": { "type": "quantitative" } },
+                "color": { "fieldName": "product_name", "scale": { "type": "categorical" } }
+              },
+              "data": { "queryName": "main_query" }
+            }
+          },
+          "position": { "x": 0, "y": 0, "width": 6, "height": 6 }
+        },
+        {
+          "widget": {
+            "name": "average-monthly-price-by-product",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "f0b18206",
+                  "fields": [
+                    { "name": "product_name", "expression": "`product_name`" },
+                    { "name": "monthly(month_start)", "expression": "DATE_TRUNC(\"MONTH\", `month_start`)" },
+                    { "name": "sum(avg_price)", "expression": "SUM(`avg_price`)" }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": { "value": "Average monthly price by product", "fields": [] }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": { "fieldName": "monthly(month_start)", "axis": { "hideTitle": true }, "scale": { "type": "temporal" } },
+                "y": { "fieldName": "sum(avg_price)", "axis": { "hideTitle": true }, "scale": { "type": "quantitative" } },
+                "color": { "fieldName": "product_name", "scale": { "type": "categorical" } }
+              },
+              "data": { "queryName": "main_query" }
+            }
+          },
+          "position": { "x": 6, "y": 0, "width": 6, "height": 6 }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": { "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED" },
+    "applyModeEnabled": false
+  }
+}

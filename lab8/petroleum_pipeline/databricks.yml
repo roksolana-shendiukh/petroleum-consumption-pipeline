@@ -16,6 +16,12 @@ variables:
     description: Schema for dimensions and facts
   raw_volume_path:
     description: Volume folder with the raw API files
+  warehouse_id:
+    description: SQL warehouse that runs the dashboard queries
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
+  dashboard_folder:
+    description: Workspace folder where the dashboard is created
   calendar_start:
     description: First day of the calendar dimension
     default: "2009-01-01"
@@ -39,12 +45,14 @@ targets:
     default: true
     workspace:
       host: https://adb-7405604651938730.10.azuredatabricks.net
+      root_path: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/petroleum_pipeline/dev
     variables:
       catalog: dbr_dev_ua5816bd
       bronze_schema: roksolana_shendiu770_bronze_lf
       silver_schema: roksolana_shendiu770_silver_lf
       gold_schema: roksolana_shendiu770_gold_lf
       raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/lf
+      dashboard_folder: /Workspace/Users/roksolana.shendiu770@softserve.academy
     resources:
       jobs:
         unit_tests:
@@ -72,7 +80,7 @@ targets:
     mode: production
     workspace:
       host: https://adb-7405619332572019.19.azuredatabricks.net
-      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/petroleum_pipeline/prod
     run_as:
       service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
     permissions:
@@ -86,6 +94,7 @@ targets:
       silver_schema: silver
       gold_schema: gold
       raw_volume_path: /Volumes/dbr_dev_ua_5816_trail/bronze/raw_files
+      dashboard_folder: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727
     resources:
       schemas:
         bronze:
