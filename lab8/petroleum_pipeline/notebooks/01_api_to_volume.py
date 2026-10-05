@@ -60,3 +60,12 @@ def save(records, subfolder, prefix):
         f.write(to_jsonl(records))
     logger.info(f"Saved {len(records)} records to {path}")
     return path
+
+
+# COMMAND ----------
+
+consumption_path = save(consumption, "consumption", "petroleum_raw")
+prices_path = save(prices, "prices", "petroleum_prices_raw")
+
+if not consumption_path and not prices_path:
+    raise RuntimeError("Nothing was saved: no consumption and no price records")
