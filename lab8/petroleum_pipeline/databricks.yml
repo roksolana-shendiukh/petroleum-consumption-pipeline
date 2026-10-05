@@ -6,9 +6,6 @@ include:
   - resources/*/*.yml
 
 variables:
-  cluster_id:
-    description: Existing cluster used in dev only (unit tests)
-    default: ""
   catalog:
     description: Unity Catalog catalog for all layers
   bronze_schema:
@@ -48,7 +45,6 @@ targets:
       silver_schema: roksolana_shendiu770_silver_lf
       gold_schema: roksolana_shendiu770_gold_lf
       raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/lf
-      cluster_id: 0924-102324-wnx9xwo2
     resources:
       jobs:
         unit_tests:
@@ -76,10 +72,13 @@ targets:
     mode: production
     workspace:
       host: https://adb-7405619332572019.19.azuredatabricks.net
+      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/${bundle.name}/${bundle.target}
     run_as:
       service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
     permissions:
       - user_name: roksolana.shendiu770@softserve.academy
+        level: CAN_MANAGE
+      - service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
         level: CAN_MANAGE
     variables:
       catalog: dbr_dev_ua_5816_trail
