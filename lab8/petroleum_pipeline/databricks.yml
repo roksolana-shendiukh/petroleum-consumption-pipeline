@@ -53,18 +53,19 @@ targets:
       jobs:
         unit_tests:
           name: petroleum-unit-tests
+          environments:
+            - environment_key: tests
+              spec:
+                environment_version: "3"
+                dependencies:
+                  - pytest
+                  - pytest-cov
+                  - tenacity
+                  - httpx
+                  - pyyaml
           tasks:
             - task_key: pytest
-              existing_cluster_id: ${var.cluster_id}
-              libraries:
-                - pypi:
-                    package: pytest
-                - pypi:
-                    package: pytest-cov
-                - pypi:
-                    package: tenacity
-                - pypi:
-                    package: httpx
+              environment_key: tests
               spark_python_task:
                 python_file: tests/run_tests.py
                 parameters:
