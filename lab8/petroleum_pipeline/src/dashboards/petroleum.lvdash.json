@@ -1,0 +1,117 @@
+bundle:
+  name: petroleum_pipeline
+
+include:
+  - resources/*.yml
+  - resources/*/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for all layers
+  bronze_schema:
+    description: Schema for raw tables
+  silver_schema:
+    description: Schema for cleaned tables
+  gold_schema:
+    description: Schema for dimensions and facts
+  raw_volume_path:
+    description: Volume folder with the raw API files
+  warehouse_id:
+    description: SQL warehouse that runs the dashboard queries
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
+  calendar_start:
+    description: First day of the calendar dimension
+    default: "2009-01-01"
+  min_weeks_per_month:
+    description: Months with fewer weeks are left out of monthly facts
+    default: "4"
+
+artifacts:
+  petroleum_transformations:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+sync:
+  include:
+    - dist/*.whl
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405604651938730.10.azuredatabricks.net
+    variables:
+      catalog: dbr_dev_ua5816bd
+      bronze_schema: roksolana_shendiu770_bronze_lf
+      silver_schema: roksolana_shendiu770_silver_lf
+      gold_schema: roksolana_shendiu770_gold_lf
+      raw_volume_path: /Volumes/dbr_dev_ua5816bd/roksolana_shendiu770/raw_files/lf
+    resources:
+      jobs:
+        unit_tests:
+          name: petroleum-unit-tests
+          environments:
+            - environment_key: tests
+              spec:
+                environment_version: "3"
+                dependencies:
+                  - pytest
+                  - pytest-cov
+                  - tenacity
+                  - httpx
+                  - pyyaml
+          tasks:
+            - task_key: pytest
+              environment_key: tests
+              spark_python_task:
+                python_file: tests/run_tests.py
+                parameters:
+                  - ${workspace.file_path}
+                  - "--threshold=95"
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405619332572019.19.azuredatabricks.net
+      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
+    permissions:
+      - user_name: roksolana.shendiu770@softserve.academy
+        level: CAN_MANAGE
+      - service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
+        level: CAN_MANAGE
+    variables:
+      catalog: dbr_dev_ua_5816_trail
+      bronze_schema: bronze
+      silver_schema: silver
+      gold_schema: gold
+      raw_volume_path: /Volumes/dbr_dev_ua_5816_trail/bronze/raw_files
+    resources:
+      schemas:
+        bronze:
+          name: bronze
+          catalog_name: ${var.catalog}
+        silver:
+          name: silver
+          catalog_name: ${var.catalog}
+        gold:
+          name: gold
+          catalog_name: ${var.catalog}
+      volumes:
+        raw_files:
+          name: raw_files
+          catalog_name: ${var.catalog}
+          schema_name: ${resources.schemas.bronze.name}
+      pipelines:
+        petroleum_etl:
+          schema: ${resources.schemas.bronze.name}
+      jobs:
+        petroleum_etl_job:
+          schedule:
+            quartz_cron_expression: "0 0 12 ? * TUE"
+            timezone_id: America/New_York
+            pause_status: UNPAUSED
