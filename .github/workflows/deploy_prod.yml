@@ -48,12 +48,15 @@ jobs:
       - name: Deploy
         run: databricks bundle deploy -t prod
 
-      - name: Run the ETL job
+      - name: Run the ETL job and report its status
+        timeout-minutes: 150
+        working-directory: .
         env:
+          DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
           START_DATE: ${{ inputs.start_date }}
         run: |
+          args=(run-job --job-name petroleum-etl)
           if [ -n "${START_DATE}" ]; then
-            databricks bundle run petroleum_etl_job -t prod --params start_date="${START_DATE}"
-          else
-            databricks bundle run petroleum_etl_job -t prod
+            args+=(--param "start_date=${START_DATE}")
           fi
+          uv run --no-project --with "databricks-sdk>=0.40,<1" python lab9/cli.py "${args[@]}"
