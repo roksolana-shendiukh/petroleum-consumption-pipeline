@@ -59,4 +59,4 @@ jobs:
           if [ -n "${START_DATE}" ]; then
             args+=(--param "start_date=${START_DATE}")
           fi
-          uv run --no-project --with "databricks-sdk>=0.40,<1" python lab9/cli.py "${args[@]}"
+          uv run --no-project --with "databricks-sdk==0.147.0" python lab9/cli.py "${args[@]}"
