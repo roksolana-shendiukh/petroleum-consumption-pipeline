@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import DatabricksError, NotFound, PermissionDenied, Unauthenticated
-from databricks.sdk.service.compute import DataSecurityMode
+from databricks.sdk.service.compute import ClusterDetails, DataSecurityMode
 from databricks.sdk.service.jobs import (
     NotebookTask,
     Run,
@@ -25,6 +25,7 @@ TERMINAL_STATES = {
     RunLifeCycleState.SKIPPED,
     RunLifeCycleState.INTERNAL_ERROR,
 }
+
 
 PERMANENT_ERRORS = (NotFound, PermissionDenied, Unauthenticated)
 TRANSIENT_ERRORS = (DatabricksError, OSError)
@@ -63,6 +64,7 @@ def _check_idempotency_token(token: str | None) -> None:
         )
 
 
+
 def _request_cluster(
     w: WorkspaceClient,
     name: str,
@@ -71,10 +73,11 @@ def _request_cluster(
     custom_tags: dict[str, str] | None,
     policy_id: str | None,
 ) -> str:
+    node_type = node_type_id or w.clusters.select_node_type(local_disk=True, min_memory_gb=16)
     waiter = w.clusters.create(
         cluster_name=name,
         spark_version=w.clusters.select_spark_version(long_term_support=True),
-        node_type_id=node_type_id or w.clusters.select_node_type(local_disk=True, min_memory_gb=16),
+        node_type_id=node_type,
         num_workers=0,
         autotermination_minutes=autotermination_minutes,
         data_security_mode=DataSecurityMode.SINGLE_USER,
@@ -96,7 +99,11 @@ def _wait_until_running(w: WorkspaceClient, cluster_id: str, timeout_minutes: in
 
 
 def delete_cluster(w: WorkspaceClient, cluster_id: str) -> None:
-    w.clusters.permanent_delete(cluster_id)
+    try:
+        w.clusters.permanent_delete(cluster_id)
+    except NotFound:
+        logger.info("Cluster %s is already deleted", cluster_id)
+        return
     logger.info("Cluster %s deleted", cluster_id)
 
 
@@ -107,6 +114,14 @@ def _delete_cluster_quietly(w: WorkspaceClient, cluster_id: str) -> None:
         logger.exception(
             "Could not delete cluster %s; it will stop by autotermination", cluster_id
         )
+
+
+def find_clusters_by_tags(w: WorkspaceClient, tags: dict[str, str]) -> list[ClusterDetails]:
+    return [
+        cluster
+        for cluster in w.clusters.list()
+        if tags.items() <= (cluster.custom_tags or {}).items()
+    ]
 
 
 def create_cluster(
@@ -263,6 +278,7 @@ def wait_for_run(
 ) -> RunResult:
     deadline = time.monotonic() + timeout_seconds
     last_state = None
+    last_url = ""
     errors = 0
     finished = False
     try:
@@ -285,6 +301,7 @@ def wait_for_run(
             else:
                 errors = 0
                 finished = result.is_finished
+                last_url = result.url or last_url
                 if result.life_cycle_state != last_state:
                     logger.info("Run %s: %s (%s)", run_id, result.life_cycle_state, result.url)
                     last_state = result.life_cycle_state
@@ -294,7 +311,10 @@ def wait_for_run(
                     return result
 
             if time.monotonic() >= deadline:
-                raise TimeoutError(f"Run {run_id} did not finish in {timeout_seconds} seconds")
+                where = f" ({last_url})" if last_url else ""
+                raise TimeoutError(
+                    f"Run {run_id} did not finish in {timeout_seconds} seconds{where}"
+                )
             time.sleep(poll_seconds)
     except BaseException as error:
         if cancel_on_abort and not finished and not isinstance(error, PERMANENT_ERRORS):
