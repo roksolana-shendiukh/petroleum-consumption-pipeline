@@ -1,0 +1,26 @@
+syntax = "proto2";
+
+message AisShipStatic {
+	required string event_id = 1;
+	required string message_type = 2;
+	required int64 mmsi = 3;
+	required int64 event_ts = 4;
+	required int64 ingest_ts = 5;
+	required string producer_id = 6;
+	required int64 producer_seq = 7;
+	optional string report_part = 8;
+	optional string ship_name = 9;
+	optional string call_sign = 10;
+	optional int32 imo_number = 11;
+	optional int32 ship_type = 12;
+	optional int32 dim_to_bow = 13;
+	optional int32 dim_to_stern = 14;
+	optional int32 dim_to_port = 15;
+	optional int32 dim_to_starboard = 16;
+	optional double draught = 17;
+	optional string destination = 18;
+	optional int32 eta_month = 19;
+	optional int32 eta_day = 20;
+	optional int32 eta_hour = 21;
+	optional int32 eta_minute = 22;
+}

@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+message AisPosition {
+	required string event_id = 1;
+	required string message_type = 2;
+	required int64 mmsi = 3;
+	required int64 event_ts = 4;
+	required int64 ingest_ts = 5;
+	required string producer_id = 6;
+	required int64 producer_seq = 7;
+	optional string ship_name = 8;
+	optional double latitude = 9;
+	optional double longitude = 10;
+	optional double sog = 11;
+	optional double cog = 12;
+	optional int32 true_heading = 13;
+	optional int32 nav_status = 14;
+	optional int32 rate_of_turn = 15;
+	optional bool position_accuracy = 16;
+	optional bool raim = 17;
+	optional int32 utc_second = 18;
+	optional int32 message_id = 19;
+	optional int32 repeat_indicator = 20;
+}
