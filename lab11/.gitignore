@@ -3,3 +3,4 @@
 __pycache__/
 *.pyc
 dev/sample/ais_sample.jsonl
+*_pb2.py
