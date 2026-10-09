@@ -26,9 +26,12 @@ class Settings:
     duration_seconds: int
     producer_id: str
     metrics_interval_seconds: int
-    max_inflight_records: int
     reconnect_initial_backoff_seconds: float
     reconnect_max_backoff_seconds: float
+    connection_per_stream: bool
+    max_inflight_records: int
+    ingest_retries: int
+    retry_backoff_seconds: float
 
     @property
     def positions_table(self):
@@ -83,7 +86,10 @@ def load_settings(argv=None):
         duration_seconds=args.duration,
         producer_id=f"{args.producer_name}-{started}",
         metrics_interval_seconds=config["metrics_interval_seconds"],
-        max_inflight_records=config["max_inflight_records"],
         reconnect_initial_backoff_seconds=config["source"]["reconnect_initial_backoff_seconds"],
         reconnect_max_backoff_seconds=config["source"]["reconnect_max_backoff_seconds"],
+        connection_per_stream=config["sink"]["connection_per_stream"],
+        max_inflight_records=config["sink"]["max_inflight_records"],
+        ingest_retries=config["sink"]["ingest_retries"],
+        retry_backoff_seconds=config["sink"]["retry_backoff_seconds"],
     )

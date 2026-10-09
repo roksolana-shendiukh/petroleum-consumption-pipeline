@@ -1,6 +1,5 @@
 region: world
 metrics_interval_seconds: 30
-max_inflight_records: 10000
 
 regions:
   marmara: [[[40.0, 26.0], [41.5, 30.0]]]
@@ -11,3 +10,9 @@ regions:
 source:
   reconnect_initial_backoff_seconds: 1
   reconnect_max_backoff_seconds: 60
+
+sink:
+  connection_per_stream: false
+  max_inflight_records: 10000
+  ingest_retries: 3
+  retry_backoff_seconds: 2
