@@ -1,0 +1,9 @@
+region: world
+metrics_interval_seconds: 30
+max_inflight_records: 10000
+
+regions:
+  marmara: [[[40.0, 26.0], [41.5, 30.0]]]
+  northsea: [[[50.0, -5.0], [62.0, 13.0]]]
+  europe: [[[30.0, -15.0], [72.0, 45.0]]]
+  world: [[[-90.0, -180.0], [90.0, 180.0]]]
