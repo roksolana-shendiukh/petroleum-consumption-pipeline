@@ -21,4 +21,5 @@ message AisPosition {
 	optional int32 utc_second = 18;
 	optional int32 message_id = 19;
 	optional int32 repeat_indicator = 20;
+	optional string raw_payload = 21;
 }

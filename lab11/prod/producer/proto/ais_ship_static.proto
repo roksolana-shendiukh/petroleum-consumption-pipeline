@@ -23,4 +23,5 @@ message AisShipStatic {
 	optional int32 eta_day = 20;
 	optional int32 eta_hour = 21;
 	optional int32 eta_minute = 22;
+	optional string raw_payload = 23;
 }
