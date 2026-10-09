@@ -1,4 +1,5 @@
 import hashlib
+import json
 from datetime import datetime
 
 POSITIONS = "positions"
@@ -150,4 +151,8 @@ def normalize(message):
         fields = static(message_type, body, meta, mmsi, event_ts)
         if fields:
             events.append((STATIC, fields))
+
+    raw_payload = json.dumps(message, ensure_ascii=False, separators=(",", ":"))
+    for _, fields in events:
+        fields["raw_payload"] = raw_payload
     return events
