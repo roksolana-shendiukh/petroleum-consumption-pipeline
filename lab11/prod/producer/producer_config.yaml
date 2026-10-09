@@ -7,3 +7,7 @@ regions:
   northsea: [[[50.0, -5.0], [62.0, 13.0]]]
   europe: [[[30.0, -15.0], [72.0, 45.0]]]
   world: [[[-90.0, -180.0], [90.0, 180.0]]]
+
+source:
+  reconnect_initial_backoff_seconds: 1
+  reconnect_max_backoff_seconds: 60

@@ -27,6 +27,8 @@ class Settings:
     producer_id: str
     metrics_interval_seconds: int
     max_inflight_records: int
+    reconnect_initial_backoff_seconds: float
+    reconnect_max_backoff_seconds: float
 
     @property
     def positions_table(self):
@@ -82,4 +84,6 @@ def load_settings(argv=None):
         producer_id=f"{args.producer_name}-{started}",
         metrics_interval_seconds=config["metrics_interval_seconds"],
         max_inflight_records=config["max_inflight_records"],
+        reconnect_initial_backoff_seconds=config["source"]["reconnect_initial_backoff_seconds"],
+        reconnect_max_backoff_seconds=config["source"]["reconnect_max_backoff_seconds"],
     )
