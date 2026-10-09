@@ -90,18 +90,3 @@ SELECT 'normalization' AS check_name, message_type, count(*) AS rows,
 FROM bronze_positions
 WHERE message_type = 'PositionReport'
 GROUP BY message_type;
-
-SELECT 'cost' AS check_name, u.usage_date, u.sku_name,
-       u.product_features.lakeflow_connect.zerobus_request_type AS zerobus_request_type,
-       sum(u.usage_quantity) AS usage_quantity, u.usage_unit,
-       round(sum(u.usage_quantity * p.pricing.default), 4) AS list_cost_usd
-FROM system.billing.usage AS u
-LEFT JOIN system.billing.list_prices AS p
-  ON u.sku_name = p.sku_name
- AND u.cloud = p.cloud
- AND u.usage_start_time >= p.price_start_time
- AND (p.price_end_time IS NULL OR u.usage_start_time < p.price_end_time)
-WHERE u.billing_origin_product = 'LAKEFLOW_CONNECT'
-  AND u.usage_date >= DATE'2026-10-08'
-GROUP BY ALL
-ORDER BY u.usage_date;
