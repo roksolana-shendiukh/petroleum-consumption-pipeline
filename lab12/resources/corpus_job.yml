@@ -13,22 +13,7 @@ resources:
             dependencies:
               - ../dist/*.whl
       tasks:
-        - task_key: setup_tables
-          environment_key: lab12_env
-          timeout_seconds: 600
-          python_wheel_task:
-            package_name: lab12_rag_pipeline
-            entry_point: setup_tables
-            parameters:
-              - --tables-config
-              - ${workspace.file_path}/config/tables.json
-              - --catalog
-              - ${var.catalog}
-              - --schema
-              - ${var.schema}
         - task_key: ingest_raw
-          depends_on:
-            - task_key: setup_tables
           environment_key: lab12_env
           max_retries: 1
           timeout_seconds: 3600
