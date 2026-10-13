@@ -9,6 +9,12 @@ variables:
     description: Unity Catalog catalog for Lab 12
   schema:
     description: Schema for Lab 12 tables
+  experiment_id:
+    description: MLflow experiment id with Unity Catalog trace storage
+    default: ""
+  warehouse_id:
+    description: SQL warehouse id used for MLflow tracing
+    default: ""
 
 artifacts:
   lab12_package:
@@ -38,6 +44,8 @@ targets:
     variables:
       catalog: dbr_dev_ua5816bd
       schema: roksolana_shendiu770_lab12
+      experiment_id: "238023478310055"
+      warehouse_id: b07374f1bdc10890
 
   prod:
     mode: production
