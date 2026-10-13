@@ -30,7 +30,9 @@ def parse_verdict(text: str, low: int, high: int, with_groundedness: bool) -> di
     data = json.loads(text[start : end + 1])
     if not isinstance(data.get("refused"), bool):
         raise ValueError("refused must be true or false")
-    groundedness = _score(data.get("groundedness"), "groundedness", low, high) if with_groundedness else None
+    groundedness = None
+    if with_groundedness and data.get("groundedness") is not None:
+        groundedness = _score(data["groundedness"], "groundedness", low, high)
     return {
         "correctness": _score(data.get("correctness"), "correctness", low, high),
         "relevance": _score(data.get("relevance"), "relevance", low, high),
