@@ -1,8 +1,4 @@
 {
-  "catalog": "dbr_dev_ua5816bd",
-  "schema": "roksolana_shendiu770_lab12",
-  "source_table": "raw_documents",
-  "target_table": "parsed_sections",
   "html_parser": "html.parser",
   "min_document_chars": 100,
   "split_tag": "h2",
