@@ -34,3 +34,7 @@ resources:
               - ${var.catalog}
               - --schema
               - ${var.schema}
+              - --experiment-id
+              - ${var.experiment_id}
+              - --warehouse-id
+              - ${var.warehouse_id}
