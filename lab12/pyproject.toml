@@ -1,12 +1,13 @@
 [project]
 name = "lab12_rag_pipeline"
-version = "0.0.8"
+version = "0.0.9"
 requires-python = ">=3.10"
 dependencies = [
     "requests",
     "beautifulsoup4",
     "langchain-text-splitters>=0.3",
     "databricks-ai-search",
+    "databricks-sdk",
 ]
 
 [project.scripts]
@@ -19,6 +20,7 @@ load_eval_questions = "load_eval_questions:main"
 create_search = "create_search:main"
 delete_search = "delete_search:main"
 evaluate_retrieval = "evaluate_retrieval:main"
+generate_answers = "generate_answers:main"
 
 [dependency-groups]
 dev = [
@@ -42,6 +44,7 @@ packages = [
     "src/eia_eval",
     "src/eia_search",
     "src/eia_retrieval",
+    "src/eia_generation",
     "src/lab12_tables",
 ]
 
@@ -55,6 +58,7 @@ packages = [
 "src/create_search.py" = "create_search.py"
 "src/delete_search.py" = "delete_search.py"
 "src/evaluate_retrieval.py" = "evaluate_retrieval.py"
+"src/generate_answers.py" = "generate_answers.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
