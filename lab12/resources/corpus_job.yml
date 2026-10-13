@@ -14,6 +14,7 @@ resources:
               - ../dist/*.whl
       tasks:
         - task_key: ingest_raw
+          environment_key: lab12_env
           max_retries: 1
           timeout_seconds: 3600
           python_wheel_task:
@@ -28,12 +29,10 @@ resources:
               - ${var.catalog}
               - --schema
               - ${var.schema}
-          existing_cluster_id: 0828-065013-gln8ogbm
-          libraries:
-            - whl: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/lab12_rag/dev/artifacts/.internal/lab12_rag_pipeline-0.0.1-py3-none-any.whl
         - task_key: parse_documents
           depends_on:
             - task_key: ingest_raw
+          environment_key: lab12_env
           timeout_seconds: 1800
           python_wheel_task:
             package_name: lab12_rag_pipeline
@@ -47,6 +46,20 @@ resources:
               - ${var.catalog}
               - --schema
               - ${var.schema}
-          existing_cluster_id: 0828-065013-gln8ogbm
-          libraries:
-            - whl: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/lab12_rag/dev/artifacts/.internal/lab12_rag_pipeline-0.0.1-py3-none-any.whl
+        - task_key: chunk_documents
+          depends_on:
+            - task_key: parse_documents
+          environment_key: lab12_env
+          timeout_seconds: 1800
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: chunk_documents
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/chunk_documents.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
