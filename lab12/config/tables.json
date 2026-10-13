@@ -35,5 +35,28 @@
       {"name": "retrieved_at", "type": "timestamp", "nullable": false},
       {"name": "parsed_at", "type": "timestamp", "nullable": false}
     ]
+  },
+  "chunks": {
+    "name": "chunks",
+    "properties": {"delta.enableChangeDataFeed": "true"},
+    "columns": [
+      {"name": "chunk_id", "type": "string", "nullable": false},
+      {"name": "doc_id", "type": "string", "nullable": false},
+      {"name": "chunk_index", "type": "int", "nullable": false},
+      {"name": "part_heading", "type": "string", "nullable": false},
+      {"name": "title", "type": "string", "nullable": true},
+      {"name": "source", "type": "string", "nullable": false},
+      {"name": "doc_type", "type": "string", "nullable": false},
+      {"name": "section", "type": "string", "nullable": true},
+      {"name": "categories", "type": "array<string>", "nullable": true},
+      {"name": "source_url", "type": "string", "nullable": false},
+      {"name": "last_updated", "type": "string", "nullable": true},
+      {"name": "content_hash", "type": "string", "nullable": false},
+      {"name": "chunk_text", "type": "string", "nullable": false},
+      {"name": "char_count", "type": "int", "nullable": false},
+      {"name": "token_estimate", "type": "int", "nullable": false},
+      {"name": "retrieved_at", "type": "timestamp", "nullable": false},
+      {"name": "chunked_at", "type": "timestamp", "nullable": false}
+    ]
   }
 }

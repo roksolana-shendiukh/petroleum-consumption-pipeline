@@ -1,0 +1,9 @@
+{
+  "max_chunk_chars": 1600,
+  "min_chunk_chars": 400,
+  "overlap_chars": 240,
+  "chars_per_token": 4,
+  "separators": ["\n", ". ", " ", ""],
+  "header_template": "Title: {title}\nSection: {heading}\n\n",
+  "chunk_id_format": "{doc_id}#{index:04d}"
+}
