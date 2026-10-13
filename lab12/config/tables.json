@@ -59,6 +59,25 @@
       {"name": "chunked_at", "type": "timestamp", "nullable": false}
     ]
   },
+  "chunk_embeddings": {
+    "name": "chunk_embeddings",
+    "properties": {"delta.enableChangeDataFeed": "true"},
+    "columns": [
+      {"name": "chunk_id", "type": "string", "nullable": false},
+      {"name": "doc_id", "type": "string", "nullable": false},
+      {"name": "title", "type": "string", "nullable": true},
+      {"name": "part_heading", "type": "string", "nullable": false},
+      {"name": "doc_type", "type": "string", "nullable": false},
+      {"name": "section", "type": "string", "nullable": true},
+      {"name": "categories", "type": "array<string>", "nullable": true},
+      {"name": "source_url", "type": "string", "nullable": false},
+      {"name": "last_updated", "type": "string", "nullable": true},
+      {"name": "chunk_text", "type": "string", "nullable": false},
+      {"name": "embedding", "type": "array<float>", "nullable": false},
+      {"name": "embedding_model", "type": "string", "nullable": false},
+      {"name": "embedded_at", "type": "timestamp", "nullable": false}
+    ]
+  },
   "eval_questions": {
     "name": "eval_questions",
     "properties": {},

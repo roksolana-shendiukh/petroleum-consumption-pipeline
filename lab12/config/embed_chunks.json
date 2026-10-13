@@ -1,0 +1,5 @@
+{
+  "endpoint": "databricks-gte-large-en",
+  "dimension": 1024,
+  "text_column": "chunk_text"
+}
