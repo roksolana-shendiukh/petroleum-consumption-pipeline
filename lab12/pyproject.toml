@@ -1,6 +1,6 @@
 [project]
 name = "lab12_rag_pipeline"
-version = "0.0.6"
+version = "0.0.7"
 requires-python = ">=3.10"
 dependencies = [
     "requests",
@@ -40,6 +40,7 @@ packages = [
     "src/eia_embed",
     "src/eia_eval",
     "src/eia_search",
+    "src/eia_retrieval",
     "src/lab12_tables",
 ]
 
