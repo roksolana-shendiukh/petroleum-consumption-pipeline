@@ -94,5 +94,26 @@
       {"name": "note", "type": "string", "nullable": true},
       {"name": "loaded_at", "type": "timestamp", "nullable": false}
     ]
+  },
+  "retrieval_results": {
+    "name": "retrieval_results",
+    "properties": {},
+    "columns": [
+      {"name": "run_id", "type": "string", "nullable": false},
+      {"name": "evaluated_at", "type": "timestamp", "nullable": false},
+      {"name": "question_id", "type": "string", "nullable": false},
+      {"name": "split", "type": "string", "nullable": false},
+      {"name": "question_type", "type": "string", "nullable": false},
+      {"name": "query_type", "type": "string", "nullable": false},
+      {"name": "k", "type": "int", "nullable": false},
+      {"name": "retrieved_chunk_ids", "type": "array<string>", "nullable": false},
+      {"name": "gold_chunk_ids", "type": "array<string>", "nullable": false},
+      {"name": "hit", "type": "boolean", "nullable": false},
+      {"name": "recall", "type": "double", "nullable": false},
+      {"name": "precision", "type": "double", "nullable": false},
+      {"name": "reciprocal_rank", "type": "double", "nullable": false},
+      {"name": "dcg", "type": "double", "nullable": false},
+      {"name": "ndcg", "type": "double", "nullable": false}
+    ]
   }
 }
