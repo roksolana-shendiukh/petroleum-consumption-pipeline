@@ -4,23 +4,26 @@
   "source_table": "raw_documents",
   "target_table": "parsed_sections",
   "html_parser": "html.parser",
-  "min_document_chars": 300,
+  "min_document_chars": 100,
   "split_tag": "h2",
   "heading_marker": "## ",
   "list_item_prefix": "- ",
   "table_cell_separator": " | ",
   "last_updated_prefix": "Last updated:",
+  "title_suffixes": [" - U.S. Energy Information Administration (EIA)"],
+  "drop_lines": ["Click to enlarge", "More data", "Click to enlarge | More data"],
+  "remove_title_tags": ["h1"],
   "remove_tags": ["script", "style", "noscript", "img", "figure", "form", "button", "svg", "iframe"],
   "inline_tags": ["a", "em", "strong", "span", "b", "i", "u", "sup", "sub", "abbr", "cite", "small"],
   "doc_types": {
     "explained": {
       "container": "div.article-content",
-      "title_selectors": ["h1", "title"],
+      "title_selectors": ["title"],
       "default_heading": "Overview"
     },
     "faq": {
       "container": "div.article-alt",
-      "title_selectors": ["div.article-alt h1", "h1", "title"],
+      "title_selectors": ["div.article-alt h1", "title"],
       "default_heading": "Answer"
     }
   }
