@@ -115,5 +115,25 @@
       {"name": "dcg", "type": "double", "nullable": false},
       {"name": "ndcg", "type": "double", "nullable": false}
     ]
+  },
+  "generation_results": {
+    "name": "generation_results",
+    "properties": {},
+    "columns": [
+      {"name": "run_id", "type": "string", "nullable": false},
+      {"name": "generated_at", "type": "timestamp", "nullable": false},
+      {"name": "question_id", "type": "string", "nullable": false},
+      {"name": "split", "type": "string", "nullable": false},
+      {"name": "question_type", "type": "string", "nullable": false},
+      {"name": "mode", "type": "string", "nullable": false},
+      {"name": "model", "type": "string", "nullable": false},
+      {"name": "query_type", "type": "string", "nullable": true},
+      {"name": "top_k", "type": "int", "nullable": true},
+      {"name": "context_chunk_ids", "type": "array<string>", "nullable": false},
+      {"name": "prompt", "type": "string", "nullable": false},
+      {"name": "answer", "type": "string", "nullable": true},
+      {"name": "error", "type": "string", "nullable": true},
+      {"name": "latency_ms", "type": "bigint", "nullable": false}
+    ]
   }
 }
