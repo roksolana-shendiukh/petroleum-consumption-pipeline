@@ -58,5 +58,22 @@
       {"name": "retrieved_at", "type": "timestamp", "nullable": false},
       {"name": "chunked_at", "type": "timestamp", "nullable": false}
     ]
+  },
+  "eval_questions": {
+    "name": "eval_questions",
+    "properties": {},
+    "columns": [
+      {"name": "question_id", "type": "string", "nullable": false},
+      {"name": "split", "type": "string", "nullable": false},
+      {"name": "question_type", "type": "string", "nullable": false},
+      {"name": "question", "type": "string", "nullable": false},
+      {"name": "expected_answer", "type": "string", "nullable": false},
+      {"name": "gold_chunk_ids", "type": "array<string>", "nullable": false},
+      {"name": "evidence", "type": "array<string>", "nullable": false},
+      {"name": "answerable", "type": "boolean", "nullable": false},
+      {"name": "verification", "type": "string", "nullable": true},
+      {"name": "note", "type": "string", "nullable": true},
+      {"name": "loaded_at", "type": "timestamp", "nullable": false}
+    ]
   }
 }
