@@ -14,6 +14,16 @@ from eia_generation.llm import ask
 from eia_generation.prompt import build_messages, render_prompt
 from eia_generation.rows import build_row
 from eia_generation.storage import read_questions
+from eia_generation.tracing import (
+    configure,
+    flush,
+    llm_span,
+    question_span,
+    retriever_span,
+    set_documents,
+    set_response_preview,
+    set_result,
+)
 from eia_retrieval.config import load_config as load_retrieval_config
 from eia_retrieval.query import embed_texts, get_index, search
 from eia_retrieval.storage import save_results
@@ -34,6 +44,8 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--tables-config", required=True)
     parser.add_argument("--catalog", required=True)
     parser.add_argument("--schema", required=True)
+    parser.add_argument("--experiment-id", required=True)
+    parser.add_argument("--warehouse-id", required=True)
     return parser.parse_args(argv)
 
 
@@ -45,6 +57,7 @@ def main(argv: list[str] | None = None) -> None:
     search_settings = load_search_config(args.search_config)
     embed = load_embed_config(args.embed_config)
     tables = load_tables(args.tables_config)
+    configure(args.experiment_id, args.warehouse_id)
     spark = SparkSession.builder.getOrCreate()
 
     questions = read_questions(
@@ -67,29 +80,35 @@ def main(argv: list[str] | None = None) -> None:
     run_id = uuid.uuid4().hex
     rows = []
     for position, question in enumerate(questions):
-        chunks = []
-        if index is not None:
-            chunks = search(
-                index,
-                retrieval,
-                vectors[position],
-                question["question"],
-                query_type=config["query_type"],
-                top_k=config["top_k"],
-            )
         for mode in config["modes"]:
-            used = chunks if mode == "retrieval" else []
-            system, user = build_messages(config, mode, question["question"], used)
-            answer, error, latency_ms = ask(
-                client,
-                config["model"],
-                system,
-                user,
-                config["temperature"],
-                config["max_tokens"],
-                config["max_retries"],
-                config["retry_wait_s"],
-            )
+            with question_span(run_id, question, mode) as span:
+                used = []
+                if mode == "retrieval":
+                    with retriever_span(question["question"], config["query_type"], config["top_k"]) as retriever:
+                        used = search(
+                            index,
+                            retrieval,
+                            vectors[position],
+                            question["question"],
+                            query_type=config["query_type"],
+                            top_k=config["top_k"],
+                        )
+                        set_documents(retriever, used)
+                system, user = build_messages(config, mode, question["question"], used)
+                with llm_span(config["model"], system, user) as generation:
+                    answer, error, latency_ms = ask(
+                        client,
+                        config["model"],
+                        system,
+                        user,
+                        config["temperature"],
+                        config["max_tokens"],
+                        config["max_retries"],
+                        config["retry_wait_s"],
+                    )
+                    set_result(generation, answer, error)
+                set_result(span, answer, error)
+                set_response_preview(answer, error)
             rows.append(
                 build_row(
                     run_id,
@@ -108,6 +127,7 @@ def main(argv: list[str] | None = None) -> None:
             )
         logger.info("Answered %s (%d of %d)", question["question_id"], position + 1, len(questions))
 
+    flush()
     save_results(
         spark,
         rows,
