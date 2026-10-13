@@ -1,11 +1,12 @@
 [project]
 name = "lab12_rag_pipeline"
-version = "0.0.5"
+version = "0.0.6"
 requires-python = ">=3.10"
 dependencies = [
     "requests",
     "beautifulsoup4",
     "langchain-text-splitters>=0.3",
+    "databricks-ai-search",
 ]
 
 [project.scripts]
@@ -15,6 +16,8 @@ parse_documents = "parse_documents:main"
 chunk_documents = "chunk_documents:main"
 embed_chunks = "embed_chunks:main"
 load_eval_questions = "load_eval_questions:main"
+create_search = "create_search:main"
+delete_search = "delete_search:main"
 
 [dependency-groups]
 dev = [
@@ -30,7 +33,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/eia_ingest", "src/eia_parse", "src/eia_chunk", "src/eia_embed", "src/eia_eval", "src/lab12_tables"]
+packages = [
+    "src/eia_ingest",
+    "src/eia_parse",
+    "src/eia_chunk",
+    "src/eia_embed",
+    "src/eia_eval",
+    "src/eia_search",
+    "src/lab12_tables",
+]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/setup_tables.py" = "setup_tables.py"
@@ -39,6 +50,8 @@ packages = ["src/eia_ingest", "src/eia_parse", "src/eia_chunk", "src/eia_embed",
 "src/chunk_documents.py" = "chunk_documents.py"
 "src/embed_chunks.py" = "embed_chunks.py"
 "src/load_eval_questions.py" = "load_eval_questions.py"
+"src/create_search.py" = "create_search.py"
+"src/delete_search.py" = "delete_search.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

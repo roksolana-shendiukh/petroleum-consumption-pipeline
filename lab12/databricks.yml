@@ -31,6 +31,14 @@ targets:
       catalog: dbr_dev_ua5816bd
       schema: roksolana_shendiu770_lab12
 
+  free:
+    mode: development
+    workspace:
+      host: https://dbc-72291aa5-f437.cloud.databricks.com
+    variables:
+      catalog: dbr_dev_ua5816bd
+      schema: roksolana_shendiu770_lab12
+
   prod:
     mode: production
     workspace:
