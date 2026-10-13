@@ -17,9 +17,9 @@ from eia_ingest.targets import build_targets
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
-    parser.add_argument("--catalog")
-    parser.add_argument("--schema")
-    parser.add_argument("--table")
+    parser.add_argument("--catalog", required=True)
+    parser.add_argument("--schema", required=True)
+    parser.add_argument("--table", required=True)
     args = parser.parse_args(argv)
 
     logging.basicConfig(
@@ -29,10 +29,7 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     config = load_config(args.config)
-    catalog = args.catalog or config["catalog"]
-    schema = args.schema or config["schema"]
-    table = args.table or config["table"]
-    full_name = f"{catalog}.{schema}.{table}"
+    full_name = f"{args.catalog}.{args.schema}.{args.table}"
 
     spark = SparkSession.builder.getOrCreate()
     run_ts = datetime.now(timezone.utc)
