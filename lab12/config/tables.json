@@ -1,0 +1,39 @@
+{
+  "raw": {
+    "name": "raw_documents",
+    "properties": {},
+    "columns": [
+      {"name": "doc_id", "type": "string", "nullable": false},
+      {"name": "source", "type": "string", "nullable": false},
+      {"name": "doc_type", "type": "string", "nullable": false},
+      {"name": "section", "type": "string", "nullable": true},
+      {"name": "categories", "type": "array<string>", "nullable": true},
+      {"name": "source_url", "type": "string", "nullable": false},
+      {"name": "final_url", "type": "string", "nullable": false},
+      {"name": "raw_html", "type": "string", "nullable": false},
+      {"name": "content_hash", "type": "string", "nullable": false},
+      {"name": "retrieved_at", "type": "timestamp", "nullable": false}
+    ]
+  },
+  "parsed": {
+    "name": "parsed_sections",
+    "properties": {},
+    "columns": [
+      {"name": "doc_id", "type": "string", "nullable": false},
+      {"name": "part_index", "type": "int", "nullable": false},
+      {"name": "part_heading", "type": "string", "nullable": false},
+      {"name": "part_text", "type": "string", "nullable": false},
+      {"name": "char_count", "type": "int", "nullable": false},
+      {"name": "title", "type": "string", "nullable": true},
+      {"name": "source", "type": "string", "nullable": false},
+      {"name": "doc_type", "type": "string", "nullable": false},
+      {"name": "section", "type": "string", "nullable": true},
+      {"name": "categories", "type": "array<string>", "nullable": true},
+      {"name": "source_url", "type": "string", "nullable": false},
+      {"name": "last_updated", "type": "string", "nullable": true},
+      {"name": "content_hash", "type": "string", "nullable": false},
+      {"name": "retrieved_at", "type": "timestamp", "nullable": false},
+      {"name": "parsed_at", "type": "timestamp", "nullable": false}
+    ]
+  }
+}
