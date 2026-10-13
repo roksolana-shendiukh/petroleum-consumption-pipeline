@@ -12,14 +12,15 @@ from eia_ingest.downloader import download
 from eia_ingest.http_client import Page, create_session
 from eia_ingest.storage import save_raw
 from eia_ingest.targets import build_targets
+from lab12_tables.definitions import columns_ddl, full_name, load_tables
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
+    parser.add_argument("--tables-config", required=True)
     parser.add_argument("--catalog", required=True)
     parser.add_argument("--schema", required=True)
-    parser.add_argument("--table", required=True)
     args = parser.parse_args(argv)
 
     logging.basicConfig(
@@ -29,7 +30,7 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     config = load_config(args.config)
-    full_name = f"{args.catalog}.{args.schema}.{args.table}"
+    raw_table = load_tables(args.tables_config)["raw"]
 
     spark = SparkSession.builder.getOrCreate()
     run_ts = datetime.now(timezone.utc)
@@ -42,7 +43,7 @@ def main(argv: list[str] | None = None) -> None:
     if failed:
         raise RuntimeError(f"{len(failed)} pages failed: {failed}")
 
-    save_raw(spark, rows, full_name)
+    save_raw(spark, rows, full_name(args.catalog, args.schema, raw_table), columns_ddl(raw_table))
 
 
 if __name__ == "__main__":
