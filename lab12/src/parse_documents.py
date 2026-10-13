@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from datetime import datetime, timezone
 
 from pyspark.sql import SparkSession
@@ -16,10 +17,10 @@ logger = logging.getLogger(__name__)
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
-    parser.add_argument("--catalog")
-    parser.add_argument("--schema")
-    parser.add_argument("--source-table")
-    parser.add_argument("--target-table")
+    parser.add_argument("--catalog", required=True)
+    parser.add_argument("--schema", required=True)
+    parser.add_argument("--source-table", required=True)
+    parser.add_argument("--target-table", required=True)
     return parser.parse_args(argv)
 
 
@@ -27,9 +28,9 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, force=True)
     settings = load_config(args.config)
-    prefix = f"{args.catalog or settings['catalog']}.{args.schema or settings['schema']}"
-    source = f"{prefix}.{args.source_table or settings['source_table']}"
-    target = f"{prefix}.{args.target_table or settings['target_table']}"
+    prefix = f"{args.catalog}.{args.schema}"
+    source = f"{prefix}.{args.source_table}"
+    target = f"{prefix}.{args.target_table}"
     spark = SparkSession.builder.getOrCreate()
     parsed_at = datetime.now(timezone.utc)
 
@@ -47,3 +48,7 @@ def main(argv: list[str] | None = None) -> None:
 
     save_parsed(spark, rows, target)
     logger.info("Parsed %d documents into %d parts, saved to %s", len(documents), len(rows), target)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
