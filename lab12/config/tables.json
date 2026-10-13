@@ -135,5 +135,27 @@
       {"name": "error", "type": "string", "nullable": true},
       {"name": "latency_ms", "type": "bigint", "nullable": false}
     ]
+  },
+  "judge_results": {
+    "name": "judge_results",
+    "properties": {},
+    "columns": [
+      {"name": "run_id", "type": "string", "nullable": false},
+      {"name": "judged_at", "type": "timestamp", "nullable": false},
+      {"name": "generation_run_id", "type": "string", "nullable": false},
+      {"name": "question_id", "type": "string", "nullable": false},
+      {"name": "split", "type": "string", "nullable": false},
+      {"name": "question_type", "type": "string", "nullable": false},
+      {"name": "mode", "type": "string", "nullable": false},
+      {"name": "judge_model", "type": "string", "nullable": false},
+      {"name": "correctness", "type": "int", "nullable": true},
+      {"name": "relevance", "type": "int", "nullable": true},
+      {"name": "groundedness", "type": "int", "nullable": true},
+      {"name": "refused", "type": "boolean", "nullable": true},
+      {"name": "behavior_correct", "type": "boolean", "nullable": true},
+      {"name": "reasoning", "type": "string", "nullable": true},
+      {"name": "error", "type": "string", "nullable": true},
+      {"name": "latency_ms", "type": "bigint", "nullable": false}
+    ]
   }
 }
