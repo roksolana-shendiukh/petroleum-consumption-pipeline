@@ -14,6 +14,7 @@ resources:
               - ../dist/*.whl
       tasks:
         - task_key: setup_tables
+          environment_key: lab12_env
           timeout_seconds: 600
           python_wheel_task:
             package_name: lab12_rag_pipeline
@@ -25,6 +26,3 @@ resources:
               - ${var.catalog}
               - --schema
               - ${var.schema}
-          existing_cluster_id: 0828-065013-gln8ogbm
-          libraries:
-            - whl: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/lab12_rag/dev/artifacts/.internal/lab12_rag_pipeline-0.0.1-py3-none-any.whl
