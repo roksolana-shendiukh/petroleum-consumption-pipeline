@@ -1,16 +1,31 @@
 from typing import Any
 
-from pyspark.sql import SparkSession
-
-from lab12_tables.definitions import column_names, columns_ddl
+from lab12_tables.definitions import column_names
 
 
-def read_chunk_ids(spark: SparkSession, full_name: str) -> set[str]:
-    return {row["chunk_id"] for row in spark.table(full_name).select("chunk_id").collect()}
+def build_rows(
+    questions: list[dict[str, Any]],
+    table: dict[str, Any],
+    generated: dict[str, Any],
+) -> list[dict[str, Any]]:
+    rows = []
+    for item in questions:
+        row = {}
+        for name in column_names(table):
+            if name in generated:
+                row[name] = generated[name]
+            elif name in item:
+                row[name] = item[name]
+            else:
+                raise ValueError(f"{item.get('question_id')}: {name} is missing")
+        rows.append(row)
+    return rows
 
 
-def save_questions(spark: SparkSession, rows: list[dict[str, Any]], full_name: str, table: dict[str, Any]) -> None:
-    names = column_names(table)
-    data = [tuple(row[name] for name in names) for row in rows]
-    frame = spark.createDataFrame(data, schema=columns_ddl(table))
-    frame.write.mode("overwrite").insertInto(full_name)
+def missing_chunk_ids(questions: list[dict[str, Any]], chunk_ids: set[str]) -> list[str]:
+    return sorted(
+        f"{item['question_id']}:{chunk_id}"
+        for item in questions
+        for chunk_id in item["gold_chunk_ids"]
+        if chunk_id not in chunk_ids
+    )
