@@ -31,10 +31,10 @@ Public knowledge-base articles from the U.S. Energy Information Administration (
 
 Rules are configuration, not code: per source, the content container, title selectors, tags to drop and noise lines to skip (`config/parse_documents.json`).
 
-| What we do | Why |
+| What is done | Why |
 |---|---|
 | Read only the main article container; drop configured tags and comments | navigation and scripts would pollute embeddings |
-| Flatten tables to text lines (caption + rows) | tables hold the numbers questions ask about, and plain text embeds well |
+| Flatten tables to text lines (caption + rows) | tables hold the numbers ask about, and plain text embeds well |
 | Unwrap inline tags (links, bold) and keep list bullets | a sentence stays on one line instead of fragments |
 | Split into sections at headings | one section = one topic, so chunks are focused and citations are clear |
 | Move "Last updated" to the `last_updated` field | keeps the text clean and allows freshness checks |
@@ -112,12 +112,12 @@ Known issue: the overlap can start a chunk in the middle of a list, so the list'
 | For every question the pipeline runs retrieve, build prompt, call LLM, store answer (`lab12-generate`) | The whole path from question to answer is one repeatable job, not manual steps. |
 | Retrieval uses HYBRID search with the top 5 chunks | Keyword matching helps with numbers, years and product names, which pure vector search can miss. |
 | Retrieved chunks are put into the prompt with their title and section, and the system prompt says to answer only from this context | Answers can be traced to a source, and the model is pushed away from using its own memory. |
-| A fixed refusal phrase is defined: "I cannot answer this question from the provided documents." | Refusals are detected by exact match, so unanswerable questions can be measured without guessing. |
+| A fixed refusal phrase is defined: "I cannot answer this question from the provided documents." | Refusals are detected by exact match, so unanswerable can be measured without guessing. |
 | Llama 3.3 70B (`databricks-meta-llama-3-3-70b-instruct`) is called with temperature 0 and max 600 tokens | Deterministic output makes runs comparable, and a token limit keeps cost and latency bounded. |
-| Every question is answered in two modes: `no_retrieval` (question only) and `retrieval` (question and chunks) | The same model and questions give a direct with/without retrieval comparison. |
+| Every question is answered in two modes: `no_retrieval` (question only) and `retrieval` (question and chunks) | The same model and give a direct with/without retrieval comparison. |
 | The model is called through the Databricks SDK with retries and a pause between attempts | A temporary endpoint error does not lose a row. Failures stay visible in the `error` column. |
 | Each result is appended to the Delta table `generation_results` with `run_id`, `mode`, `prompt`, `context_chunk_ids`, `answer`, `latency_ms` and `error` | Every answer can be reproduced and audited: exactly which prompt and which chunks produced it. |
-| Questions come from the `train` and `dev` splits (45 questions) | The `test` split stays untouched for the final evaluation. |
+| Questions come from the train and dev splits (45 of 50 questions) | The test split (5 questions) stays untouched, so it can be used once for the final evaluation. |
 
 **Verification:** the same question answered without and with retrieval (with the chunk ids used as context), and the number of questions per split
 
@@ -150,7 +150,7 @@ Findings:
 | Aspect | Result |
 |---|---|
 | Relevance | Equal in both modes (4.84). The model stays on topic with or without context. |
-| Correctness | Retrieval adds +0.93 overall (3.76 ->4.69), most of all for factual questions (3.58 ->4.92), where exact figures matter. |
+| Correctness | Retrieval adds +0.93 overall (3.76 -> 4.69), most of all for factual questions (3.58 -> 4.92), where exact figures matter. |
 | Hallucination risk | Without retrieval, 1 unanswerable question got an answer. With retrieval, 0. |
 | Missing context | 1 answerable question was refused in each mode, which shows a retrieval gap. |
 | Weak spots | Adversarial questions get slightly worse with retrieval (3.67, groundedness 2.67), and 2 answers have low groundedness. Multi-document questions do not improve, and their relevance drops from 5 to 4. |
