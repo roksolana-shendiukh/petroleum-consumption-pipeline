@@ -124,3 +124,33 @@ Known issue: the overlap can start a chunk in the middle of a list, so the list'
 <img src="screenshots/07_generation_results.png" width="700">
 
 <img src="screenshots/08_eval_splits.png" width="700">
+
+## Evaluation
+
+| What is done | Why |
+|---|---|
+| Every answer from both modes is scored by a separate judge model (`databricks-gpt-oss-120b`) | The judge is a different model from the generator, which reduces the bias of a model grading its own style. |
+| Three scores from 1 to 5: correctness (against the reference answer), relevance (to the question), groundedness (supported by the retrieved chunks) | They cover the three quality aspects: right content, on-topic answer, and hallucination risk. |
+| Groundedness is scored only in `retrieval` mode | Without retrieval there is no context to check against, so the value is empty. |
+| The judge also reports whether the model refused to answer, and `behavior_correct` compares it with whether the question is answerable | Refusing an unanswerable question is correct, answering it is a hallucination, and refusing an answerable one points to missing context. |
+| `behavior_correct` is left empty for adversarial questions | Their expected behavior is not always a refusal, so counting them would distort the rate. |
+| Results are stored per answer in `judge_results` with the judge's reasoning | Each score can be inspected and challenged. |
+| A sample of answers was checked by hand | Correctness agreed with the judge in 6 of 6 cases, so the scores are trustworthy for a first assessment. |
+
+**Results:** average scores from 1 to 5 on 45 questions (`train` + `dev`), by mode and by question type, and the counts behind hallucination risk and missing context
+
+<img src="screenshots/09_judge_by_mode.png" width="700">
+
+<img src="screenshots/10_judge_by_type.png" width="700">
+
+<img src="screenshots/11_judge_risks.png" width="700">
+
+Findings:
+
+| Aspect | Result |
+|---|---|
+| Relevance | Equal in both modes (4.84). The model stays on topic with or without context. |
+| Correctness | Retrieval adds +0.93 overall (3.76 ->4.69), most of all for factual questions (3.58 ->4.92), where exact figures matter. |
+| Hallucination risk | Without retrieval, 1 unanswerable question got an answer. With retrieval, 0. |
+| Missing context | 1 answerable question was refused in each mode, which shows a retrieval gap. |
+| Weak spots | Adversarial questions get slightly worse with retrieval (3.67, groundedness 2.67), and 2 answers have low groundedness. Multi-document questions do not improve, and their relevance drops from 5 to 4. |
