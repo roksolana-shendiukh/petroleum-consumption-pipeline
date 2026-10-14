@@ -179,3 +179,26 @@ Observation: `relevance_to_query` often marks a refusal as `Fail`. For unanswera
 <img src="screenshots/14_trace_spans.png" width="700">
 
 <img src="screenshots/15_trace_assessment.png" width="700">
+
+## Limitations
+
+| Limitation | Impact |
+|---|---|
+| Small evaluation set: 50 questions, only 5 in `test` | Metrics are rough, one question in `test` is 20% of the score. |
+| The judge is an LLM, and agreement with a human was checked only on a sample | Scores are indicative, not final. |
+| Adversarial and multi-document questions do not improve with retrieval | Their causes are not investigated yet. |
+| Overlap can start a chunk in the middle of a list | A few chunks have incomplete context. |
+| The `relevance_to_query` scorer marks correct refusals as `Fail` | Results must be read together with the question type. |
+| Free Edition: one user, one search endpoint, serverless compute only | Real roles and least-privilege grants are not configured, the access model is only described. |
+| Production monitoring is in Beta | Behavior and interface may change. |
+
+## Discussion
+
+| Topic | Conclusion |
+|---|---|
+| RAG vs prompting | Retrieval raises correctness from 3.76 to 4.69 (factual: 3.58 to 4.92) and removes the one answer given to an unanswerable question. Every answer also gets a source. The price is an index and a longer prompt. |
+| Chunk size vs quality | Chunks are up to 1600 characters with 15% overlap and a title header. Smaller chunks match more precisely but lose context, larger ones keep context but blur the embedding and cost more tokens. Only one size was evaluated, so a measured comparison is a next step. |
+| Governance | Data, traces and scores are in Unity Catalog, and every answer is linked to its `run_id`, prompt and chunk ids. Access follows least privilege, and no secrets are stored in code. |
+| Cost | Embeddings are computed once and stored. The endpoint exists only while needed and is created and deleted by explicit jobs. Scorers are sampled, and the LLM runs at temperature 0 with a token limit. |
+| Endpoint creation via Python SDK | Unlike UI clicks, the code is reviewed in git and repeatable. Unlike raw REST calls, authentication and errors are handled by the SDK. It also fits CI/CD in the next part. |
+| Throughput | A question takes 1.48 s on average, so one sequential worker gives about 0.7 queries per second. Retrieval takes about 0.17 s, so the LLM call is the bottleneck. Limits of parallel load were not measured. |
