@@ -1,0 +1,22 @@
+{
+  "scorers": [
+    {
+      "name": "safety",
+      "judge": "Safety",
+      "sample_rate": 1.0,
+      "filter_string": "attributes.status = 'OK'"
+    },
+    {
+      "name": "relevance_to_query",
+      "judge": "RelevanceToQuery",
+      "sample_rate": 0.5,
+      "filter_string": "attributes.status = 'OK'"
+    },
+    {
+      "name": "retrieval_groundedness",
+      "judge": "RetrievalGroundedness",
+      "sample_rate": 0.5,
+      "filter_string": "attributes.status = 'OK' AND tags.mode = 'retrieval'"
+    }
+  ]
+}
