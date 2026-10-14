@@ -49,7 +49,7 @@ Not captured: charts and photos (images). A few photo captions and "Did you know
 
 ## Chunking
 
-| What done | Why |
+| What is done | Why |
 |---|---|
 | Recursive splitter: line -> sentence -> word -> character | cuts at natural boundaries before cutting mid-sentence |
 | Max 1600 characters (~400 tokens) | fits the embedding model input and keeps one topic per chunk |
@@ -105,3 +105,22 @@ Known issue: the overlap can start a chunk in the middle of a list, so the list'
 
 <img src="screenshots/06_search_index.png" width="700">
 
+## Question answering workflow
+
+| What is done | Why |
+|---|---|
+| For every question the pipeline runs retrieve, build prompt, call LLM, store answer (`lab12-generate`) | The whole path from question to answer is one repeatable job, not manual steps. |
+| Retrieval uses HYBRID search with the top 5 chunks | Keyword matching helps with numbers, years and product names, which pure vector search can miss. |
+| Retrieved chunks are put into the prompt with their title and section, and the system prompt says to answer only from this context | Answers can be traced to a source, and the model is pushed away from using its own memory. |
+| A fixed refusal phrase is defined: "I cannot answer this question from the provided documents." | Refusals are detected by exact match, so unanswerable questions can be measured without guessing. |
+| Llama 3.3 70B (`databricks-meta-llama-3-3-70b-instruct`) is called with temperature 0 and max 600 tokens | Deterministic output makes runs comparable, and a token limit keeps cost and latency bounded. |
+| Every question is answered in two modes: `no_retrieval` (question only) and `retrieval` (question and chunks) | The same model and questions give a direct with/without retrieval comparison. |
+| The model is called through the Databricks SDK with retries and a pause between attempts | A temporary endpoint error does not lose a row. Failures stay visible in the `error` column. |
+| Each result is appended to the Delta table `generation_results` with `run_id`, `mode`, `prompt`, `context_chunk_ids`, `answer`, `latency_ms` and `error` | Every answer can be reproduced and audited: exactly which prompt and which chunks produced it. |
+| Questions come from the `train` and `dev` splits (45 questions) | The `test` split stays untouched for the final evaluation. |
+
+**Verification:** the same question answered without and with retrieval (with the chunk ids used as context), and the number of questions per split
+
+<img src="screenshots/07_generation_results.png" width="700">
+
+<img src="screenshots/08_eval_splits.png" width="700">
