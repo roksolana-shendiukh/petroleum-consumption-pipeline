@@ -84,3 +84,24 @@ Known issue: the overlap can start a chunk in the middle of a list, so the list'
 **Verification:** 191 chunks, all vectors have 1024 dimensions
 <img src="screenshots/05_embeddings.png" width="700">
 
+
+## Search index and retrieval
+
+| What is done | Why |
+|---|---|
+| A Delta Sync index `chunk_embeddings_index` is built on top of the `chunk_embeddings` table | The index follows the table. After a table change, one sync updates it, and no separate copy of the data is maintained by hand. |
+| Embeddings are self-managed: the index uses the stored `embedding` column (1024 dimensions) | Vectors are computed once in Spark and reused. Index rebuild costs no extra embedding calls. |
+| Queries are embedded with the same `databricks-gte-large-en` model | Query and chunk vectors must come from the same model, otherwise similarity scores are meaningless. |
+| `chunk_id` is the primary key, and `doc_id`, `title`, `part_heading`, `doc_type`, `section`, `categories`, `source_url`, `last_updated` and `chunk_text` are synced into the index | Metadata makes filtering possible and lets every answer cite its source. `chunk_text` is returned directly, so no second lookup is needed. |
+| Sync mode is `TRIGGERED` | The corpus changes rarely. Sync runs only on demand, which is cheaper than continuous sync. |
+| A `STANDARD` endpoint `lab12_search_endpoint` hosts the index | The only endpoint type available in the workspace. One endpoint serves all queries. |
+| The endpoint and the index are created and deleted by separate jobs (`lab12-search-create`, `lab12-search-delete`) | Endpoints are billed while they exist. Creation is explicit and cleanup is one click. |
+| Retrieval returns the top 5 chunks (`top_k`) | Enough context for most questions, short enough to keep the prompt small and cheap. |
+| Both ANN (vector) and HYBRID (vector + keyword) search are supported | Pure vector search can miss exact terms such as product names, years and numbers. Hybrid search covers them. |
+| Metadata filters (for example by `doc_type` or `doc_id`) can be passed with a query | Search can be limited to a subset of documents without changing the index. |
+| Retrieval is evaluated separately from generation (`lab12-retrieval-eval`, k = 10, ANN vs HYBRID) | If the answer is wrong, it is known whether retrieval or the LLM is the cause. |
+
+**Verification:** 
+
+<img src="screenshots/06_search_index.png" width="700">
+
