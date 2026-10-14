@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    lab12_monitoring_setup_job:
+      name: lab12-monitoring-setup
+      max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
+      environments:
+        - environment_key: lab12_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+      tasks:
+        - task_key: setup_monitoring
+          environment_key: lab12_env
+          timeout_seconds: 1800
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: setup_monitoring
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/monitoring.json
+              - --experiment-id
+              - ${var.experiment_id}
+              - --warehouse-id
+              - ${var.warehouse_id}

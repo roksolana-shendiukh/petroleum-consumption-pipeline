@@ -1,6 +1,6 @@
 [project]
 name = "lab12_rag_pipeline"
-version = "0.0.14"
+version = "0.0.15"
 requires-python = ">=3.10"
 dependencies = [
     "requests",
@@ -23,6 +23,7 @@ delete_search = "delete_search:main"
 evaluate_retrieval = "evaluate_retrieval:main"
 generate_answers = "generate_answers:main"
 judge_answers = "judge_answers:main"
+setup_monitoring = "setup_monitoring:main"
 
 [dependency-groups]
 dev = [
@@ -48,6 +49,7 @@ packages = [
     "src/eia_retrieval",
     "src/eia_generation",
     "src/eia_judge",
+    "src/eia_monitoring",
     "src/lab12_tables",
 ]
 
@@ -63,6 +65,7 @@ packages = [
 "src/evaluate_retrieval.py" = "evaluate_retrieval.py"
 "src/generate_answers.py" = "generate_answers.py"
 "src/judge_answers.py" = "judge_answers.py"
+"src/setup_monitoring.py" = "setup_monitoring.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
