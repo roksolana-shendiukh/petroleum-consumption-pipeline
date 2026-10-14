@@ -22,12 +22,10 @@ Public knowledge-base articles from the U.S. Energy Information Administration (
 - Each run replaces the whole table (the corpus is small); incremental MERGE by content_hash is a possible next step.
 - Some FAQ answers mostly link to other pages, so evaluation questions are written mainly from the long pages.
 
-<details>
-<summary>Verification: loaded documents by type</summary>
+**Verification:** loaded documents by type
 
 <img src="screenshots/01_raw_documents.png" alt="raw_documents by doc_type" width="700">
 
-</details>
 
 ## HTML parsing (clean text)
 
@@ -44,12 +42,10 @@ Rules are configuration, not code: per source, the content container, title sele
 
 Not captured: charts and photos (images). A few photo captions and "Did you know?" blocks remain as noise.
 
-<details>
-<summary>Verification: parsed sections of one page</summary>
+**Verification:** parsed sections of one page
 
 <img src="screenshots/02_parsed_sections.png" alt="parsed_sections sample" width="700">
 
-</details>
 
 ## Chunking
 
@@ -66,11 +62,25 @@ Not captured: charts and photos (images). A few photo captions and "Did you know
 
 Known issue: the overlap can start a chunk in the middle of a list, so the list's intro sentence stays in the previous chunk (for example `imports-and-exports#0003`: crude-oil import shares without their label).
 
-<details>
-<summary>Verification: chunk statistics and a sample chunk</summary>
+**Verification:** chunk statistics and a sample chunk
 
-<img src="screenshots/03_chunks_stats.png" alt="chunks statistics" width="700">
+<img src="screenshots/03_chunks_stats.png" width="700">
 
-<img src="screenshots/04_chunks_sample.png" alt="chunk sample with header" width="700">
+<img src="screenshots/04_chunks_sample.png" width="700">
 
-</details>
+## Embeddings and governed storage
+
+| What is done | Why |
+|---|---|
+| Every chunk is embedded with `databricks-gte-large-en` (1024 dimensions) via `ai_query` in Spark | One managed model for chunks and queries, so vectors are comparable. No model hosting is needed. |
+| Vectors are stored in the Unity Catalog Delta table `chunk_embeddings` (191 rows), next to `chunk_id`, `doc_id`, `title`, `section`, `source_url` and `chunk_text` | The table is governed by Unity Catalog (permissions, lineage). Every vector can be traced back to its source page. |
+| `embedding_model` and `embedded_at` are saved in each row | It is always known which model made a vector. Changing the model requires re-embedding, and the columns show which rows are stale. |
+| Vectors are kept in a table, not only inside the search index | The index can be deleted and rebuilt from the table without paying for embeddings again. |
+| The table is created explicitly from `config/tables.json` in the `lab12-setup` job | No hidden infrastructure. The schema is versioned in git. |
+| Change Data Feed is enabled on the table | It is required by the Delta Sync index to pick up changes. |
+| Dimensions are checked after embedding | A wrong or empty vector would break the index later. |
+
+
+**Verification:** 191 chunks, all vectors have 1024 dimensions
+<img src="screenshots/05_embeddings.png" width="700">
+
