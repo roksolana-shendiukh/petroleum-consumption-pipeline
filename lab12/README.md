@@ -154,3 +154,28 @@ Findings:
 | Hallucination risk | Without retrieval, 1 unanswerable question got an answer. With retrieval, 0. |
 | Missing context | 1 answerable question was refused in each mode, which shows a retrieval gap. |
 | Weak spots | Adversarial questions get slightly worse with retrieval (3.67, groundedness 2.67), and 2 answers have low groundedness. Multi-document questions do not improve, and their relevance drops from 5 to 4. |
+
+
+## Logging, monitoring and access
+
+| What is done | Why |
+|---|---|
+| Every prompt, the retrieved chunk ids, the answer, latency and error are stored per question in `generation_results` | Any answer can be reproduced and audited: it is known exactly what the model saw. |
+| Judge scores are stored in `judge_results` with `generation_run_id` | Each score is linked to the answer it evaluates. |
+| Result tables are append-only and every row has a `run_id` | History is kept, and runs can be compared. |
+| Each question is traced with MLflow in the experiment `lab12_rag_monitoring`, with spans for the whole call, retrieval and generation, and a `run_id` tag | The trace shows where time is spent and where an error happened, and links back to the run. |
+| Traces are stored in Unity Catalog tables (`rag__otel_*`) | Traces are governed and queryable with SQL like any other data. |
+| Built-in scorers are registered on the experiment: `safety` (100% of traces), `relevance_to_query` (50%), `retrieval_groundedness` (50%) | Quality is checked automatically without manual judge runs, and sampling keeps the cost low. |
+| Access is controlled by Unity Catalog permissions: read on source tables, write on result tables, query on model endpoints, and write on the trace tables for the monitoring identity | Least privilege: each part of the pipeline gets only the access it needs. |
+
+Observation: `relevance_to_query` often marks a refusal as `Fail`. For unanswerable questions the refusal is the correct behavior, so these `Fail` results are expected and should be read together with the question type.
+
+**Verification:** usage overview of the experiment, traces with scorer results, spans of one trace, and the safety assessment with its rationale
+
+<img src="screenshots/12_monitoring_overview.png" width="700">
+
+<img src="screenshots/13_traces_scorers.png" width="700">
+
+<img src="screenshots/14_trace_spans.png" width="700">
+
+<img src="screenshots/15_trace_assessment.png" width="700">
