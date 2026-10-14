@@ -50,3 +50,27 @@ Not captured: charts and photos (images). A few photo captions and "Did you know
 <img src="screenshots/02_parsed_sections.png" alt="parsed_sections sample" width="700">
 
 </details>
+
+## Chunking
+
+| What done | Why |
+|---|---|
+| Recursive splitter: line -> sentence -> word -> character | cuts at natural boundaries before cutting mid-sentence |
+| Max 1600 characters (~400 tokens) | fits the embedding model input and keeps one topic per chunk |
+| Overlap 240 characters (~15%) | a fact on a chunk border appears whole in at least one chunk |
+| Merge sections shorter than 400 characters with a neighbour (up to 1600) | tiny chunks match many queries and carry little meaning |
+| Prepend `Title` and `Section` to every chunk | a chunk is understandable on its own, and the title becomes part of the embedding |
+| Never cross document borders; FAQ answers stay one chunk each | answers are short and self-contained; sources stay clean |
+| Stable ids `doc_id#0000` and metadata copied from the document | citations, gold labels in evaluation and metadata filters |
+| Token count estimated as characters / 4 | cheap approximation without a tokenizer |
+
+Known issue: the overlap can start a chunk in the middle of a list, so the list's intro sentence stays in the previous chunk (for example `imports-and-exports#0003`: crude-oil import shares without their label).
+
+<details>
+<summary>Verification: chunk statistics and a sample chunk</summary>
+
+<img src="screenshots/03_chunks_stats.png" alt="chunks statistics" width="700">
+
+<img src="screenshots/04_chunks_sample.png" alt="chunk sample with header" width="700">
+
+</details>
