@@ -273,3 +273,29 @@ After the limit was raised, one `COUNT(*)` query over all tables was run on the 
 <img src="screenshots/37_uc_tables_saved_stats.png" width="800">
 
 <img src="screenshots/51_mcp_exact_row_counts_table.png" width="800">
+
+## Unit tests written by the agent
+
+The agent wrote unit tests for `src/eia_judge/parse.py`, which parses the verdict returned by the judge model. The functions are pure, so the tests need no network and no Databricks calls.
+
+The agent first showed a plan of 12 tests and the full test code, and only after approval created `tests/test_judge_parse.py`. The first run passed with 24 tests. The first coverage run showed 63%, because `content_text` had no tests. After the agent added them, 34 tests passed with 100% coverage of the module.
+
+To check that the tests catch real bugs, the upper bound of the score check was changed by hand from `<=` to `<`. Nine tests failed, and the change was reverted.
+
+Running the tests with `uv run pytest` failed, because `databricks-connect` needs Python 3.12 and the local version is 3.11.4. The tests were run in a temporary environment instead.
+
+The tests describe what the code does now, not whether this behaviour is correct, so the expected values were reviewed by a person.
+
+**Verification:** the test plan, the test code before writing, the Python version problem, the first coverage run, the mutation check, and the final result.
+
+<img src="screenshots/38_tests_plan_parse_verdict.png" width="800">
+
+<img src="screenshots/39_tests_create_file_review.png" width="800">
+
+<img src="screenshots/41_tests_uv_python_mismatch_24_passed.png" width="800">
+
+<img src="screenshots/44_tests_coverage_63_plan.png" width="800">
+
+<img src="screenshots/43_mutation_test_failures_reverted.png" width="800">
+
+<img src="screenshots/49_tests_34_passed_100_coverage.png" width="800">
