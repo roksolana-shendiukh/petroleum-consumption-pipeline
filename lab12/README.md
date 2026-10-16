@@ -299,3 +299,24 @@ The tests describe what the code does now, not whether this behaviour is correct
 <img src="screenshots/43_mutation_test_failures_reverted.png" width="800">
 
 <img src="screenshots/49_tests_34_passed_100_coverage.png" width="800">
+
+## AI/BI dashboard
+
+The agent created a dashboard definition for the judge results, using the `databricks-aibi-dashboards` skill. It is a bundle resource, so it is deployed through the same flow as the rest of the project.
+
+| File | Content |
+|---|---|
+| `resources/rag_quality.lvdash.json` | One dataset limited to the latest judge run and three bar charts: correctness, relevance and groundedness by mode, behavior-correct rate by mode, and correctness by question type and mode |
+| `resources/rag_quality_dashboard.yml` | Bundle resource. The warehouse, catalog and schema come from bundle variables, so nothing is hardcoded |
+
+Before writing the files, the agent ran the chart queries on the warehouse, and the values matched the evaluation results in this README. The check also showed that groundedness is empty for all 45 `no_retrieval` rows, so the agent stopped and asked before writing, and the missing bar is explained in the dashboard subtitle.
+
+The bundle was validated with `databricks bundle validate -t free`. Nothing was deployed by the agent. The chart layout is not tested until the dashboard is deployed and opened, and the `dev` and `prod` targets still need their own `warehouse_id`.
+
+**Verification:** the dashboard plan, the validation that stopped before writing, and the written files with a passing bundle validation.
+
+<img src="screenshots/46_dashboard_plan_widgets.png" width="800">
+
+<img src="screenshots/47_dashboard_validation_stop_null_groundedness.png" width="800">
+
+<img src="screenshots/48_dashboard_files_bundle_validate.png" width="800">
