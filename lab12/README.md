@@ -254,6 +254,12 @@ By default Claude Code runs in auto mode, where it decides on its own which tool
 
 **Verification:** the default auto mode notice, manual mode switched on, and a permission prompt showing the exact SQL query with the three options.
 
+<img src="screenshots/26_claude_auto_mode_default.png" width="800">
+
+<img src="screenshots/27_claude_manual_mode.png" width="800">
+
+<img src="screenshots/30_mcp_first_permission_prompt.png" width="800">
+
 ## Cost and compute limits
 
 Free Edition has a daily compute quota, and every SQL query needs the warehouse to run. This made cost a practical limit during the work.
@@ -311,7 +317,7 @@ The agent created a dashboard definition for the judge results, using the `datab
 
 Before writing the files, the agent ran the chart queries on the warehouse, and the values matched the evaluation results in this README. The check also showed that groundedness is empty for all 45 `no_retrieval` rows, so the agent stopped and asked before writing, and the missing bar is explained in the dashboard subtitle.
 
-The bundle was validated with `databricks bundle validate -t free`. Nothing was deployed by the agent. The chart layout is not tested until the dashboard is deployed and opened, and the `dev` and `prod` targets still need their own `warehouse_id`.
+The bundle was validated with `databricks bundle validate -t free`. Nothing was deployed by the agent. The chart layout was checked after the CI deploy, when the dashboard was opened.
 
 **Verification:** the dashboard plan, the validation that stopped before writing, and the written files with a passing bundle validation.
 
@@ -386,3 +392,44 @@ The first run of the new workflow failed: the test tools were installed into a d
 <img src="screenshots/61_ci_fix_applied.png" width="800">
 
 <img src="screenshots/62_ci_pr_checks_passed.png" width="800">
+
+## Genie space
+
+The agent defined a Genie space over `judge_results` in `resources/rag_quality_genie.yml`. It went through a pull request, CI checks and deploy after merge. The first validation failed because the agent reused the dashboard's resource key, and it renamed it.
+
+A green deploy does not prove the space works, so I asked two questions and compared the answers with values I already had (correctness 4.69 vs 3.76, behavior-correct 97.62% vs 95.24%). They matched.
+
+<img src="screenshots/67_genie_average_scores_by_mode.png" alt="Genie answer: average scores by mode" width="800">
+
+<img src="screenshots/68_genie_behavior_correct_rate.png" alt="Genie answer: behavior-correct rate by mode" width="800">
+
+## Reflection
+
+### Where the agent accelerated the work
+
+| Task | What the agent did | Result |
+|---|---|---|
+| Unit tests | Planned 12 tests, wrote the file, then added tests for the uncovered function | 34 tests and 100% coverage of `parse.py` |
+| Dashboard | Wrote the definition and checked every chart query on the warehouse before writing | Three charts whose values match the evaluation results |
+| Index check | Compared 8 settings with the config and used the CLI where MCP output was incomplete | Deployed index confirmed to match the configuration |
+| Job choice | Read the code of 10 jobs to see what each one writes and bills | The safest job was found without running the others |
+| CI/CD | Produced both workflows from the Week 8 structure and checked service principal support through the API | Pull request checks and deploy running in the pipeline |
+| Genie space | Wrote the space definition with instructions as a bundle resource | A working space deployed through the pipeline |
+
+### Where human review was essential
+
+| Area | What happened | What the person did |
+|---|---|---|
+| Governance | The agent needs access to run anything | Manual permission mode with single-use approvals only, `.mcp.json` kept out of git |
+| Governance | CI needs credentials | The service principal and its secret were created by a person, with only the permissions that deployment needs |
+| Governance | Bundle deploys publish dashboards, and development mode creates a copy of every job per identity | These effects were found by checking the workspace after deployment (20 jobs, one published dashboard), not from the green pipeline |
+| Cost | The agent assumed that a query would start the warehouse, which was wrong | The agent asked before spending compute, and the cheapest job was chosen because the daily quota is limited |
+| Correctness | Groundedness is empty for the `no_retrieval` mode | The agent stopped and asked, and the person decided how the dashboard explains it |
+| Correctness | The first CI run failed because test tools were installed into the wrong environment | A person read the log, and the agent fixed one line |
+| Correctness | Tests describe what the code does, not what it should do | The expected values were reviewed, and a bug introduced by hand was caught by 9 tests |
+| Correctness | The coverage gate covers only the tested module | The gate was limited to `parse.py` instead of a number that would fail every pull request |
+| Correctness | The first validation failed on a duplicate resource key, and the agent could not check its space IDs before a deploy | A green deploy was not accepted as proof, and two answers were compared with known values |
+
+### Conclusion
+
+The agent is fast at producing the first version and at checking facts against the workspace. It does not decide what is allowed, what costs money, or whether a result is meaningful. Everything it produced went through approval, tests, a pull request and the CI/CD pipeline, and nothing was deployed directly.
