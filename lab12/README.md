@@ -320,3 +320,23 @@ The bundle was validated with `databricks bundle validate -t free`. Nothing was 
 <img src="screenshots/47_dashboard_validation_stop_null_groundedness.png" width="800">
 
 <img src="screenshots/48_dashboard_files_bundle_validate.png" width="800">
+
+## Search index inspection
+
+The agent checked the deployed AI Search index against the configuration in the repository, using the `databricks-vector-search` skill. The index was created earlier by the pipeline code, and the agent only read it: no index, endpoint or table was created, changed or deleted, and the SQL warehouse was not used.
+
+The MCP output did not include the embedding column, the synced columns or the row count, so the agent added two read-only CLI calls (`get-index` and a `scan-index` limited to one result).
+
+| Check | Result |
+|---|---|
+| Endpoint `lab12_search_endpoint` | Online, type `STANDARD`, matches the config |
+| Index `chunk_embeddings_index` | Online, primary key, embedding column and `TRIGGERED` pipeline match the config |
+| Synced columns | All 9 columns from the config are present, and none beyond them |
+| Rows | 191 indexed, the same as the exact count of `chunk_embeddings` |
+| `timeout_s` | Not stored in Databricks, so it cannot be compared |
+
+**Verification:** the agent loading the skill and reading the index, and the comparison of the configuration with the deployed index.
+
+<img src="screenshots/52_vector_index_inspection_skill.png" width="800">
+
+<img src="screenshots/53_vector_index_config_vs_deployed.png" width="800">
