@@ -1,0 +1,50 @@
+name: lab12-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lab12/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab12-deploy
+  cancel-in-progress: false
+
+env:
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+  DATABRICKS_AUTH_TYPE: oauth-m2m
+
+defaults:
+  run:
+    working-directory: lab12
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: lab12-free
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - uses: databricks/setup-cli@main
+        with:
+          version: 1.20.0
+
+      - name: Tie the wheel version to the commit
+        run: sed -i -E "s/^version = \"([^\"+]+)\"/version = \"\1+${GITHUB_SHA::7}\"/" pyproject.toml
+
+      - name: Validate
+        run: databricks bundle validate -t free
+
+      - name: Deploy
+        run: databricks bundle deploy -t free
+
+      - name: Smoke test with the setup job
+        timeout-minutes: 15
+        run: databricks bundle run lab12_setup_job -t free
