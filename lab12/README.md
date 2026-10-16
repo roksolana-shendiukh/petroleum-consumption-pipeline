@@ -217,3 +217,26 @@ Ten skills were selected, and the installer was configured with environment vari
 <img src="screenshots/19_aidevkit_install_complete.png" width="800">
 
 The installed skills live in `.claude/skills/` and the installer state in `.ai-dev-kit/` and `.databricks/`. These folders are machine-specific, so they are listed in `.gitignore` and are not committed.
+
+## MCP server
+
+The MCP server is the part of the kit that lets the agent act in the workspace. It runs on the local machine, uses the Databricks CLI profile `free`, and exposes 44 tools (SQL execution, warehouses and compute, workspace files, pipelines, jobs, Unity Catalog).
+
+| Step | What was done | Why |
+|---|---|---|
+| Server environment | The server was installed from the cloned kit repository into its own virtual environment, outside the project | The server is a separate tool, so it does not add dependencies to the project |
+| Registration | The registration script wrote `.mcp.json` into the project, with the profile set to `free` | Claude Code reads project servers from this file |
+| Git | `.mcp.json` is not committed | It contains absolute paths of this machine, so it would not work on another one |
+| Approval | Claude Code asks for approval of a new project server, and the option for this server only was chosen | Servers added later in the project still need their own approval |
+
+**Verification:** registration result with `.mcp.json` left untracked, the registered server waiting for approval, the approval prompt, the connected server with 44 tools, and the beginning of the tool list.
+
+<img src="screenshots/23_mcp_registration_gitstatus.png" width="800">
+
+<img src="screenshots/24_mcp_config_pending_approval.png" width="800">
+
+<img src="screenshots/25_claude_mcp_server_approval.png" width="800">
+
+<img src="screenshots/28_mcp_connected_44_tools.png" width="800">
+
+<img src="screenshots/29_mcp_tools_list.png" width="400">
