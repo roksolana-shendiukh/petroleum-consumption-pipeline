@@ -45,7 +45,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv venv --python 3.12
-          uv pip install pytest pytest-cov
+          uv pip install --python .venv/bin/python pytest pytest-cov
 
       - name: Unit tests with coverage report
         run: .venv/bin/python -m pytest --cov=src --cov-report=term
