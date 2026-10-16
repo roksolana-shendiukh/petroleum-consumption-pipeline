@@ -202,3 +202,18 @@ Observation: `relevance_to_query` often marks a refusal as `Fail`. For unanswera
 | Cost | Embeddings are computed once and stored. The endpoint exists only while needed and is created and deleted by explicit jobs. Scorers are sampled, and the LLM runs at temperature 0 with a token limit. |
 | Endpoint creation via Python SDK | Unlike UI clicks, the code is reviewed in git and repeatable. Unlike raw REST calls, authentication and errors are handled by the SDK. It also fits CI/CD in the next part. |
 | Throughput | A question takes 1.48 s on average, so one sequential worker gives about 0.7 queries per second. Retrieval takes about 0.17 s, so the LLM call is the bottleneck. Limits of parallel load were not measured. |
+
+
+# Part B: AI Dev Kit
+
+Part B uses an AI coding agent (Claude Code) together with the Databricks AI Dev Kit. The kit gives the agent two things: skills, which are written guidance for Databricks tasks, and an MCP server, which gives the agent tools to act in the workspace.
+
+Ten skills were selected, and the installer was configured with environment variables instead of the interactive menu, so the same selection can be repeated.
+
+**Verification:** installer configuration with the selected skills (the `DEVKIT_SKILLS` variable) and the completed installation.
+
+<img src="screenshots/17_aidevkit_install_config.png" width="800">
+
+<img src="screenshots/19_aidevkit_install_complete.png" width="800">
+
+The installed skills live in `.claude/skills/` and the installer state in `.ai-dev-kit/` and `.databricks/`. These folders are machine-specific, so they are listed in `.gitignore` and are not committed.
