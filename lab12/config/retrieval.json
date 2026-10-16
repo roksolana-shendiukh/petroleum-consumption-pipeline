@@ -1,0 +1,15 @@
+{
+  "top_k": 5,
+  "query_type": "ANN",
+  "query_types": ["ANN", "HYBRID"],
+  "columns": [
+    "chunk_id",
+    "doc_id",
+    "title",
+    "part_heading",
+    "doc_type",
+    "section",
+    "source_url",
+    "chunk_text"
+  ]
+}

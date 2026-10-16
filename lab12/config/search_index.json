@@ -1,0 +1,20 @@
+{
+  "endpoint_name": "lab12_search_endpoint",
+  "endpoint_type": "STANDARD",
+  "index_name": "chunk_embeddings_index",
+  "primary_key": "chunk_id",
+  "embedding_vector_column": "embedding",
+  "pipeline_type": "TRIGGERED",
+  "columns_to_sync": [
+    "doc_id",
+    "title",
+    "part_heading",
+    "doc_type",
+    "section",
+    "categories",
+    "source_url",
+    "last_updated",
+    "chunk_text"
+  ],
+  "timeout_s": 3600
+}

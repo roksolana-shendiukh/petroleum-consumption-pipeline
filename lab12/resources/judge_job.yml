@@ -1,0 +1,30 @@
+resources:
+  jobs:
+    lab12_judge_job:
+      name: lab12-judge
+      max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
+      environments:
+        - environment_key: lab12_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+      tasks:
+        - task_key: judge_answers
+          environment_key: lab12_env
+          timeout_seconds: 3600
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: judge_answers
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/judge.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}

@@ -1,0 +1,8 @@
+resources:
+  dashboards:
+    lab12_rag_quality:
+      display_name: Lab 12 RAG quality
+      file_path: ./rag_quality.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.schema}

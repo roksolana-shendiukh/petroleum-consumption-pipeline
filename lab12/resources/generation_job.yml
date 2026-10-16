@@ -1,0 +1,40 @@
+resources:
+  jobs:
+    lab12_generation_job:
+      name: lab12-generate
+      max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
+      environments:
+        - environment_key: lab12_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+      tasks:
+        - task_key: generate_answers
+          environment_key: lab12_env
+          timeout_seconds: 3600
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: generate_answers
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/generation.json
+              - --retrieval-config
+              - ${workspace.file_path}/config/retrieval.json
+              - --search-config
+              - ${workspace.file_path}/config/search_index.json
+              - --embed-config
+              - ${workspace.file_path}/config/embed_chunks.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
+              - --experiment-id
+              - ${var.experiment_id}
+              - --warehouse-id
+              - ${var.warehouse_id}

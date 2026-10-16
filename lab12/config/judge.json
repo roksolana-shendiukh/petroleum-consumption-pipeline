@@ -1,0 +1,14 @@
+{
+  "model": "databricks-gpt-oss-120b",
+  "generation_run": "latest",
+  "temperature": 0.0,
+  "max_tokens": 2000,
+  "max_retries": 3,
+  "retry_wait_s": 5,
+  "scale_min": 1,
+  "scale_max": 5,
+  "system_prompt": "You are a strict evaluator of answers about energy, petroleum and fuels. You receive a question, the expected answer, whether the question is answerable from the documents, a candidate answer and, optionally, the retrieved context. Score the candidate answer. correctness (1-5): how well the candidate answer agrees with the expected answer; 5 means all key facts match, 3 means partially correct or incomplete, 1 means wrong, contradicting or missing. For a question that is not answerable from the documents, the expected answer says the information is unavailable or that the system should decline: a clear refusal or a statement that the information is not available scores 5, and a confident made-up answer scores 1. relevance (1-5): how directly the answer addresses the question that was asked, regardless of correctness. groundedness (1-5): only when context is provided, how well every claim in the answer is supported by the context; 5 means fully supported or a proper refusal, 1 means mostly unsupported; use null when no context is provided. refused (true or false): true if the candidate answer declines to answer or states that the information is not available, otherwise false. reasoning: one or two short sentences. Reply with one JSON object only and no other text, with the keys correctness, relevance, groundedness, refused, reasoning.",
+  "context_template": "[{index}] {chunk_text}",
+  "user_template_retrieval": "Question: {question}\nAnswerable from the documents: {answerable}\nExpected answer: {expected_answer}\n\nCandidate answer: {answer}\n\nContext:\n{context}",
+  "user_template_no_retrieval": "Question: {question}\nAnswerable from the documents: {answerable}\nExpected answer: {expected_answer}\n\nCandidate answer: {answer}\n\nNo context was provided, so groundedness must be null."
+}

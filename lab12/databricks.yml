@@ -1,0 +1,69 @@
+bundle:
+  name: lab12_rag
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for Lab 12
+  schema:
+    description: Schema for Lab 12 tables
+  experiment_id:
+    description: MLflow experiment id with Unity Catalog trace storage
+    default: ""
+  warehouse_id:
+    description: SQL warehouse id used for MLflow tracing
+    default: ""
+
+artifacts:
+  lab12_package:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+sync:
+  include:
+    - dist/*.whl
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405604651938730.10.azuredatabricks.net
+      root_path: /Workspace/Users/roksolana.shendiu770@softserve.academy/.bundle/lab12_rag/dev
+    variables:
+      catalog: dbr_dev_ua5816bd
+      schema: roksolana_shendiu770_lab12
+
+  free:
+    mode: development
+    workspace:
+      host: https://dbc-72291aa5-f437.cloud.databricks.com
+    variables:
+      catalog: dbr_dev_ua5816bd
+      schema: roksolana_shendiu770_lab12
+      experiment_id: "238023478310055"
+      warehouse_id: b07374f1bdc10890
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405619332572019.19.azuredatabricks.net
+      root_path: /Workspace/Users/d1a2118a-1d70-44cf-ba58-ea3454da6727/.bundle/lab12_rag/prod
+    run_as:
+      service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
+    permissions:
+      - user_name: roksolana.shendiu770@softserve.academy
+        level: CAN_MANAGE
+      - service_principal_name: d1a2118a-1d70-44cf-ba58-ea3454da6727
+        level: CAN_MANAGE
+    variables:
+      catalog: dbr_dev_ua_5816_trail
+      schema: lab12
+    resources:
+      schemas:
+        lab12:
+          name: ${var.schema}
+          catalog_name: ${var.catalog}

@@ -1,0 +1,8 @@
+
+.ai-dev-kit/
+.databricks/
+.claude/skills/
+
+.coverage
+__pycache__/
+.pytest_cache/

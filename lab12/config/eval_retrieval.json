@@ -1,0 +1,4 @@
+{
+  "k": 10,
+  "query_types": ["ANN", "HYBRID"]
+}

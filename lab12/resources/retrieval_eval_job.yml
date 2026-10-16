@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    lab12_retrieval_eval_job:
+      name: lab12-retrieval-eval
+      max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
+      environments:
+        - environment_key: lab12_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+      tasks:
+        - task_key: evaluate_retrieval
+          environment_key: lab12_env
+          timeout_seconds: 1800
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: evaluate_retrieval
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/retrieval.json
+              - --eval-config
+              - ${workspace.file_path}/config/eval_retrieval.json
+              - --search-config
+              - ${workspace.file_path}/config/search_index.json
+              - --embed-config
+              - ${workspace.file_path}/config/embed_chunks.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}

@@ -1,0 +1,54 @@
+name: lab12-pull-request-checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lab12/**"
+      - ".github/workflows/lab12_*.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab12-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+  DATABRICKS_AUTH_TYPE: oauth-m2m
+
+defaults:
+  run:
+    working-directory: lab12
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    environment: lab12-free
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - uses: databricks/setup-cli@main
+        with:
+          version: 1.20.0
+
+      - name: Validate the free bundle
+        run: databricks bundle validate -t free
+
+      - name: Show what would change in free
+        run: databricks bundle plan -t free
+
+      - name: Install test dependencies
+        run: |
+          uv venv --python 3.12
+          uv pip install --python .venv/bin/python pytest pytest-cov
+
+      - name: Unit tests with coverage report
+        run: .venv/bin/python -m pytest --cov=src --cov-report=term
+
+      - name: Coverage gate on tested modules
+        run: .venv/bin/python -m coverage report --include="src/eia_judge/parse.py" --fail-under=95

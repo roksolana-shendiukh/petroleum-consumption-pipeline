@@ -1,0 +1,30 @@
+resources:
+  jobs:
+    lab12_eval_data_job:
+      name: lab12-eval-data
+      max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
+      environments:
+        - environment_key: lab12_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+      tasks:
+        - task_key: load_eval_questions
+          environment_key: lab12_env
+          timeout_seconds: 600
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: load_eval_questions
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/eval_questions.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}

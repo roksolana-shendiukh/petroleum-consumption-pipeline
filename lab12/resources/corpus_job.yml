@@ -1,0 +1,65 @@
+resources:
+  jobs:
+    lab12_corpus_job:
+      name: lab12-corpus
+      max_concurrent_runs: 1
+      email_notifications:
+        on_failure:
+          - roksolana.shendiu770@softserve.academy
+      environments:
+        - environment_key: lab12_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+      tasks:
+        - task_key: ingest_raw
+          environment_key: lab12_env
+          max_retries: 1
+          timeout_seconds: 3600
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: ingest_raw
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/ingest_raw.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
+        - task_key: parse_documents
+          depends_on:
+            - task_key: ingest_raw
+          environment_key: lab12_env
+          timeout_seconds: 1800
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: parse_documents
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/parse_documents.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
+        - task_key: chunk_documents
+          depends_on:
+            - task_key: parse_documents
+          environment_key: lab12_env
+          timeout_seconds: 1800
+          python_wheel_task:
+            package_name: lab12_rag_pipeline
+            entry_point: chunk_documents
+            parameters:
+              - --config
+              - ${workspace.file_path}/config/chunk_documents.json
+              - --tables-config
+              - ${workspace.file_path}/config/tables.json
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
