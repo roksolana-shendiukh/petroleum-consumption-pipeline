@@ -1,0 +1,55 @@
+resources:
+  genie_spaces:
+    lab12_rag_quality_genie:
+      title: Lab 12 RAG quality
+      description: Ask questions about the LLM-judge scores of the Lab 12 RAG pipeline. Answers use the latest judge run only. Scores are 1-5; groundedness applies to retrieval mode only.
+      warehouse_id: ${var.warehouse_id}
+      serialized_space:
+        version: 2
+        config:
+          sample_questions:
+            - id: 01f1c9a0000000000000000000000001
+              question:
+                - What are the average correctness, relevance and groundedness by mode?
+            - id: 01f1c9a0000000000000000000000002
+              question:
+                - What is the average correctness by question type and mode?
+            - id: 01f1c9a0000000000000000000000003
+              question:
+                - What is the behavior-correct rate by mode?
+            - id: 01f1c9a0000000000000000000000004
+              question:
+                - Which questions scored correctness 3 or lower in retrieval mode?
+            - id: 01f1c9a0000000000000000000000005
+              question:
+                - How much does retrieval improve correctness for factual questions?
+        data_sources:
+          tables:
+            - identifier: ${var.catalog}.${var.schema}.judge_results
+        instructions:
+          text_instructions:
+            - id: 01f1c9a0000000000000000000000010
+              content:
+                - "* Always use only the latest judge run: filter run_id = (SELECT MAX_BY(run_id, judged_at) FROM judge_results). Never mix rows from different runs unless the user explicitly asks to compare runs.\n"
+                - "* State the run_id and judged_at of the run you used at the start of each answer.\n"
+                - "* correctness, relevance and groundedness are integer scores from 1 (worst) to 5 (best). Report averages with two decimals.\n"
+                - "* mode is either retrieval (answer generated with retrieved context) or no_retrieval (answer generated without context).\n"
+                - "* groundedness applies to retrieval mode only. It is NULL for every no_retrieval row by design. Never treat NULL as 0, never average it for no_retrieval, and say so when groundedness is asked for both modes.\n"
+                - "* behavior_correct is true when the model answered an answerable question or refused an unanswerable one. It is NULL for adversarial questions, which are excluded from the behavior rate. Compute the rate as AVG(CASE WHEN behavior_correct THEN 1.0 WHEN NOT behavior_correct THEN 0.0 END) and show it as a percentage.\n"
+                - "* Rows with a non-NULL error column failed to be judged; leave their scores out of averages and mention how many there were.\n"
+                - "* question_type values: adversarial, explanatory, factual, multi_document, no_answer."
+          example_question_sqls:
+            - id: 01f1c9a0000000000000000000000020
+              question:
+                - What are the average scores by mode in the latest judge run?
+              sql:
+                - "SELECT mode,\n"
+                - "  ROUND(AVG(correctness), 2) AS avg_correctness,\n"
+                - "  ROUND(AVG(relevance), 2) AS avg_relevance,\n"
+                - "  ROUND(AVG(groundedness), 2) AS avg_groundedness,\n"
+                - "  COUNT(*) AS judged_rows\n"
+                - "FROM ${var.catalog}.${var.schema}.judge_results\n"
+                - "WHERE run_id = (SELECT MAX_BY(run_id, judged_at) FROM ${var.catalog}.${var.schema}.judge_results)\n"
+                - "  AND error IS NULL\n"
+                - "GROUP BY mode\n"
+                - "ORDER BY mode"

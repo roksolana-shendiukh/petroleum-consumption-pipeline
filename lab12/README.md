@@ -321,6 +321,8 @@ The bundle was validated with `databricks bundle validate -t free`. Nothing was 
 
 <img src="screenshots/48_dashboard_files_bundle_validate.png" width="800">
 
+<img src="screenshots/66_dashboard_deployed.png" width="800">
+
 ## Search index inspection
 
 The agent checked the deployed AI Search index against the configuration in the repository, using the `databricks-vector-search` skill. The index was created earlier by the pipeline code, and the agent only read it: no index, endpoint or table was created, changed or deleted, and the SQL warehouse was not used.
@@ -354,3 +356,33 @@ The job was started after approval with `databricks bundle run lab12_setup_job -
 <img src="screenshots/56_job_selection_reads_writes_rejected.png" width="800">
 
 <img src="screenshots/55_job_run_setup_success.png" width="800">
+
+
+## CI/CD
+
+The agent generated two new workflows for Lab 12, following the structure of the Week 8 workflows. The Week 8 files were not changed.
+
+| Workflow | Runs on | Steps |
+|---|---|---|
+| `lab12_pull_request.yml` | Pull request into `main` that touches `lab12/` | `bundle validate`, `bundle plan`, unit tests, coverage gate of 95% on `src/eia_judge/parse.py` |
+| `lab12_deploy.yml` | Merge into `main` that touches `lab12/`, or a manual start | Commit SHA added to the wheel version, `bundle validate`, `bundle deploy`, then the `lab12-setup` job as a smoke test |
+
+The pipeline authenticates with a service principal (`lab12-ci`) through OAuth M2M. The service principal was created by a person, its secret is stored only in a GitHub environment (`lab12-free`), and it has only the permissions that deployment needs: use of the catalog and schema, creating and modifying tables, and use of the warehouse. The agent could not know whether Free Edition allows a service principal secret, so a person tried it first.
+
+The coverage gate covers only `parse.py`, because it is the only module with tests. A gate of 95% on the whole `src` would fail every pull request, so more modules can be added as tests are written.
+
+The first run of the new workflow failed: the test tools were installed into a different virtual environment than the one the tests used. The agent had stated that the workflow was not tested. A person read the log, the agent proposed a one-line fix, and the second run passed. The deploy workflow then ran after the merge and finished successfully.
+
+**Verification:** the plan for the workflows and the authentication, the created files, the failed first run and its fix, and the passing pull request checks.
+
+<img src="screenshots/57_ci_plan_versions_coverage_changes.png" width="800">
+
+<img src="screenshots/58_ci_plan_secrets_auth.png" width="800">
+
+<img src="screenshots/59_ci_workflows_created.png" width="800">
+
+<img src="screenshots/60_ci_first_run_lab12_failed.png" width="800">
+
+<img src="screenshots/61_ci_fix_applied.png" width="800">
+
+<img src="screenshots/62_ci_pr_checks_passed.png" width="800">
