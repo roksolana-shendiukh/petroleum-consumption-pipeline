@@ -254,8 +254,22 @@ By default Claude Code runs in auto mode, where it decides on its own which tool
 
 **Verification:** the default auto mode notice, manual mode switched on, and a permission prompt showing the exact SQL query with the three options.
 
-<img src="screenshots/26_claude_auto_mode_default.png" width="800">
+## Cost and compute limits
 
-<img src="screenshots/27_claude_manual_mode.png" width="800">
+Free Edition has a daily compute quota, and every SQL query needs the warehouse to run. This made cost a practical limit during the work.
 
-<img src="screenshots/30_mcp_first_permission_prompt.png" width="800">
+The first SQL call through MCP was rejected because the warehouse was stopped. The agent had assumed that a query would start it, and this was wrong. It did not start the warehouse itself, because that changes the workspace and uses compute, so it listed the options and waited for a decision.
+
+The MCP tools cannot start a warehouse, so the agent proposed the Databricks CLI for this. The start command was rejected because the daily limit was used up, and the agent switched to a source that needs no compute: table names and row counts were read from Unity Catalog metadata. It stated that these were saved statistics and not counted rows.
+
+After the limit was raised, one `COUNT(*)` query over all tables was run on the warehouse. The counts matched the saved statistics for 9 of 12 tables. `rag__otel_annotations` had 1,578 rows against 1,260 in the statistics, and two tables without statistics were empty. The difference is most likely caused by rows written after the statistics were saved, probably by the monitoring scorers. The agent reported it and did not refresh the statistics, because that would change table metadata.
+
+**Verification:** the agent asking before starting compute, the daily limit message, row counts from saved statistics, and the exact counts compared with them.
+
+<img src="screenshots/32_agent_asks_before_starting_compute.png" width="800">
+
+<img src="screenshots/36_free_edition_daily_limit.png" width="800">
+
+<img src="screenshots/37_uc_tables_saved_stats.png" width="800">
+
+<img src="screenshots/51_mcp_exact_row_counts_table.png" width="800">
