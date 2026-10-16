@@ -240,3 +240,22 @@ The MCP server is the part of the kit that lets the agent act in the workspace. 
 <img src="screenshots/28_mcp_connected_44_tools.png" width="800">
 
 <img src="screenshots/29_mcp_tools_list.png" width="400">
+
+## Permission mode
+
+By default Claude Code runs in auto mode, where it decides on its own which tool calls are safe enough to run without asking. For work on a real workspace this was changed to manual mode, so every tool call waits for approval.
+
+| Rule | Why |
+|---|---|
+| Manual mode for the whole session | Each SQL query, shell command and file write is seen before it runs |
+| Only the single-use option is chosen in the prompt | The option "Yes, and don't ask again" would approve the same kind of call for the rest of the session, including calls with different parameters |
+| Parameters are read before approving | The prompt shows the exact query, the profile (`free`) and the warehouse, which is the only protection against a call aimed at the wrong target |
+| Each task states what must not happen | Requests are written as read-only or limited to named files, so the agent can be checked against them |
+
+**Verification:** the default auto mode notice, manual mode switched on, and a permission prompt showing the exact SQL query with the three options.
+
+<img src="screenshots/26_claude_auto_mode_default.png" width="800">
+
+<img src="screenshots/27_claude_manual_mode.png" width="800">
+
+<img src="screenshots/30_mcp_first_permission_prompt.png" width="800">
