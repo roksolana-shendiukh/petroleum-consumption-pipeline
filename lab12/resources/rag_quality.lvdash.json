@@ -1,0 +1,195 @@
+{
+  "datasets": [
+    {
+      "name": "ds_judge_latest",
+      "displayName": "Latest judge run",
+      "queryLines": [
+        "SELECT question_id, question_type, mode, split, correctness, relevance, groundedness, ",
+        "CASE WHEN behavior_correct THEN 1.0 WHEN NOT behavior_correct THEN 0.0 END AS behavior_correct_value ",
+        "FROM judge_results ",
+        "WHERE run_id = (SELECT MAX_BY(run_id, judged_at) FROM judge_results) "
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "rag_quality",
+      "displayName": "RAG quality",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": ["## Lab 12 RAG quality"]
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle",
+            "multilineTextboxSpec": {
+              "lines": ["Latest judge run only · scores 1–5 · groundedness applies to retrieval mode only"]
+            }
+          },
+          "position": {"x": 0, "y": 1, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "scores-by-mode",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_judge_latest",
+                  "fields": [
+                    {"name": "mode", "expression": "`mode`"},
+                    {"name": "avg(correctness)", "expression": "AVG(`correctness`)"},
+                    {"name": "avg(relevance)", "expression": "AVG(`relevance`)"},
+                    {"name": "avg(groundedness)", "expression": "AVG(`groundedness`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "mode",
+                  "displayName": "Mode",
+                  "scale": {"type": "categorical", "sort": {"by": "alphabetical"}}
+                },
+                "y": {
+                  "scale": {"type": "quantitative"},
+                  "fields": [
+                    {"fieldName": "avg(correctness)", "displayName": "Correctness"},
+                    {"fieldName": "avg(relevance)", "displayName": "Relevance"},
+                    {"fieldName": "avg(groundedness)", "displayName": "Groundedness"}
+                  ],
+                  "format": {"type": "number", "decimalPlaces": {"type": "exact", "places": 2}}
+                },
+                "label": {"show": true}
+              },
+              "mark": {"layout": "group"},
+              "frame": {
+                "showTitle": true,
+                "title": "Average scores by mode",
+                "showDescription": true,
+                "description": "Mean judge score, 1–5"
+              }
+            }
+          },
+          "position": {"x": 0, "y": 2, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "behavior-rate-by-mode",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_judge_latest",
+                  "fields": [
+                    {"name": "mode", "expression": "`mode`"},
+                    {"name": "avg(behavior_correct_value)", "expression": "AVG(`behavior_correct_value`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "mode",
+                  "displayName": "Mode",
+                  "scale": {"type": "categorical", "sort": {"by": "alphabetical"}}
+                },
+                "y": {
+                  "fieldName": "avg(behavior_correct_value)",
+                  "displayName": "Behavior correct",
+                  "scale": {"type": "quantitative"},
+                  "format": {"type": "number-percent", "decimalPlaces": {"type": "exact", "places": 1}}
+                },
+                "label": {"show": true}
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Behavior-correct rate by mode",
+                "showDescription": true,
+                "description": "Answered when answerable, refused when not; adversarial questions excluded"
+              }
+            }
+          },
+          "position": {"x": 6, "y": 2, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "correctness-by-type-and-mode",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_judge_latest",
+                  "fields": [
+                    {"name": "question_type", "expression": "`question_type`"},
+                    {"name": "mode", "expression": "`mode`"},
+                    {"name": "avg(correctness)", "expression": "AVG(`correctness`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "question_type",
+                  "displayName": "Question type",
+                  "scale": {"type": "categorical", "sort": {"by": "alphabetical"}}
+                },
+                "y": {
+                  "fieldName": "avg(correctness)",
+                  "displayName": "Average correctness",
+                  "scale": {"type": "quantitative"},
+                  "format": {"type": "number", "decimalPlaces": {"type": "exact", "places": 2}}
+                },
+                "color": {
+                  "fieldName": "mode",
+                  "displayName": "Mode",
+                  "scale": {"type": "categorical"}
+                },
+                "label": {"show": true}
+              },
+              "mark": {"layout": "group"},
+              "frame": {
+                "showTitle": true,
+                "title": "Average correctness by question type and mode",
+                "showDescription": true,
+                "description": "Mean judge correctness, 1–5"
+              }
+            }
+          },
+          "position": {"x": 0, "y": 8, "width": 12, "height": 6}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {"light": "#FCFCFC", "dark": "#1F272D"},
+      "widgetBackgroundColor": {"light": "#FFFFFF", "dark": "#11171C"},
+      "widgetBorderColor": {"light": "#FFFFFF", "dark": "#11171C"},
+      "fontColor": {"light": "#11171C", "dark": "#E8ECF0"},
+      "selectionColor": {"light": "#2272B4", "dark": "#8ACAFF"},
+      "visualizationColors": ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#D55E00", "#56B4E9"],
+      "widgetHeaderAlignment": "LEFT"
+    }
+  }
+}
