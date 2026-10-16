@@ -340,3 +340,17 @@ The MCP output did not include the embedding column, the synced columns or the r
 <img src="screenshots/52_vector_index_inspection_skill.png" width="800">
 
 <img src="screenshots/53_vector_index_config_vs_deployed.png" width="800">
+
+## Running a job
+
+The agent was asked to submit one job from the bundle. Before running anything it listed the 10 `lab12-*` jobs with read-only commands and compared what each one reads and writes. `lab12-setup` was chosen because it only runs `CREATE TABLE IF NOT EXISTS`, calls no model, embedding or search endpoint, and its last run took 66 seconds. The other jobs were rejected: `lab12-embed` calls the embedding endpoint and overwrites `chunk_embeddings` (the index would then need a manual sync), `lab12-eval-data` overwrites all evaluation questions, and `lab12-monitoring-setup` changes the monitoring setup.
+
+The job was started after approval with `databricks bundle run lab12_setup_job -t free`, which runs the job that is already deployed and does not deploy anything. It finished with `TERMINATED SUCCESS` in about 42 seconds. All 8 tables already existed, so no table or row changed.
+
+**Verification:** the comparison of the jobs, the reasons for the choice, and the result of the run.
+
+<img src="screenshots/54_jobs_comparison_cheapest.png" width="800">
+
+<img src="screenshots/56_job_selection_reads_writes_rejected.png" width="800">
+
+<img src="screenshots/55_job_run_setup_success.png" width="800">
